@@ -29,13 +29,13 @@ class AppConfig @Inject()(config: Configuration) {
 
   lazy val unauthorisedUrl: String = config.get[String]("urls.unauthorised")
   lazy val alreadyClaimedUrl: String = config.get[String]("urls.alreadyClaimed")
-  lazy val trustNotClaimedUrl: String = config.get[String]("urls.trustNotClaimed")
+  lazy val estateNotClaimedUrl: String = config.get[String]("urls.estateNotClaimed")
   lazy val agentNotAuthorisedUrl: String = config.get[String]("urls.agentNotAuthorised")
   lazy val createAgentServicesAccountUrl: String = config.get[String]("urls.createAgentServicesAccount")
-  lazy val maintainThisTrust: String = config.get[String]("urls.maintainThisTrust")
+  lazy val maintainThisEstate: String = config.get[String]("urls.maintainThisEstate")
 
-  def claimATrustUrl(utr: String) =
-    s"${config.get[String]("urls.startClaimATrust")}/$utr"
+  def claimAnEstateUrl(utr: String) =
+    s"${config.get[String]("urls.startClaimAnEstate")}/$utr"
 
   lazy val relationshipName: String =
     config.get[String]("microservice.services.self.relationship-establishment.name")

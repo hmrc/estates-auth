@@ -18,9 +18,5 @@ package uk.gov.hmrc.estatesauth.controllers.actions
 
 import com.google.inject.Inject
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.estatesauth.config.AppConfig
 
-class TrustsAuthorisedFunctions @Inject()(override val authConnector: AuthConnector,
-                                          val config: AppConfig) extends AuthorisedFunctions {
-
-}
+class EstatesAuthorisedFunctions @Inject()(override val authConnector: AuthConnector) extends AuthorisedFunctions

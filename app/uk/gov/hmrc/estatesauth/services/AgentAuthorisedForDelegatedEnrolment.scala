@@ -20,32 +20,32 @@ import com.google.inject.Inject
 import play.api.Logger
 import uk.gov.hmrc.auth.core.{Enrolment, InsufficientEnrolments}
 import uk.gov.hmrc.estatesauth.config.AppConfig
-import uk.gov.hmrc.estatesauth.controllers.actions.TrustsAuthorisedFunctions
-import uk.gov.hmrc.estatesauth.models.{TrustAuthAllowed, TrustAuthDenied, TrustAuthResponse}
+import uk.gov.hmrc.estatesauth.controllers.actions.EstatesAuthorisedFunctions
+import uk.gov.hmrc.estatesauth.models.{EstateAuthAllowed, EstateAuthDenied, EstateAuthResponse}
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AgentAuthorisedForDelegatedEnrolment @Inject()(trustsAuth: TrustsAuthorisedFunctions, config: AppConfig) {
+class AgentAuthorisedForDelegatedEnrolment @Inject()(estatesAuth: EstatesAuthorisedFunctions, config: AppConfig) {
 
   def authenticate[A](utr: String)
                      (implicit hc: HeaderCarrier,
-                      ec: ExecutionContext): Future[TrustAuthResponse] = {
+                      ec: ExecutionContext): Future[EstateAuthResponse] = {
 
     val predicate = Enrolment("HMRC-TERS-ORG")
       .withIdentifier("SAUTR", utr)
       .withDelegatedAuthRule("trust-auth")
 
-    trustsAuth.authorised(predicate) {
+    estatesAuth.authorised(predicate) {
       Logger.info(s"[AgentAuthorisedForDelegatedEnrolment] agent is authorised for delegated enrolment for $utr")
-      Future.successful(TrustAuthAllowed())
+      Future.successful(EstateAuthAllowed())
     } recover {
       case _ : InsufficientEnrolments =>
         Logger.info(s"[AgentAuthorisedForDelegatedEnrolment] agent is not authorised for delegated enrolment for $utr")
-        TrustAuthDenied(config.agentNotAuthorisedUrl)
+        EstateAuthDenied(config.agentNotAuthorisedUrl)
       case _ =>
         Logger.info(s"[AgentAuthorisedForDelegatedEnrolment] agent is not authorised for $utr")
-        TrustAuthDenied(config.unauthorisedUrl)
+        EstateAuthDenied(config.unauthorisedUrl)
     }
   }
 }

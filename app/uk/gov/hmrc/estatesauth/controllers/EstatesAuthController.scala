@@ -28,7 +28,7 @@ import uk.gov.hmrc.estatesauth.connectors.EnrolmentStoreConnector
 import uk.gov.hmrc.estatesauth.controllers.actions.IdentifierAction
 import uk.gov.hmrc.estatesauth.models._
 import uk.gov.hmrc.estatesauth.models.EnrolmentStoreResponse._
-import uk.gov.hmrc.estatesauth.services.{AgentAuthorisedForDelegatedEnrolment, TrustsIV}
+import uk.gov.hmrc.estatesauth.services.{AgentAuthorisedForDelegatedEnrolment, EstatesIV}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
 import uk.gov.hmrc.play.bootstrap.controller.FrontendBaseController
@@ -39,8 +39,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class EstatesAuthController @Inject()(val controllerComponents: MessagesControllerComponents,
                                       identifierAction: IdentifierAction,
                                       enrolmentStoreConnector: EnrolmentStoreConnector,
-                                      config: AppConfig,
-                                      trustsIV: TrustsIV,
+                                      appConfig: AppConfig,
+                                      estatesIV: EstatesIV,
                                       delegatedEnrolment: AgentAuthorisedForDelegatedEnrolment
                                )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
 
@@ -52,9 +52,9 @@ class EstatesAuthController @Inject()(val controllerComponents: MessagesControll
         case Agent =>
           checkIfAgentAuthorised(utr)
         case Organisation =>
-          checkIfTrustIsClaimedAndTrustIV(utr)
+          checkIfEstateIsClaimedAndEstateIV(utr)
         case _ =>
-          Future.successful(TrustAuthDenied(config.unauthorisedUrl))
+          Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
       })
   }
 
@@ -66,25 +66,25 @@ class EstatesAuthController @Inject()(val controllerComponents: MessagesControll
         case Agent =>
           Future.successful(authoriseAgent(request))
         case Organisation =>
-          Future.successful(TrustAuthAllowed)
+          Future.successful(EstateAuthAllowed)
         case _ =>
-          Future.successful(TrustAuthDenied(config.unauthorisedUrl))
+          Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
       })
   }
 
   private def mapResult(result: Future[Object]) = result map {
-    case TrustAuthInternalServerError => InternalServerError
-    case r: TrustAuthResponse => Ok(Json.toJson(r))
+    case EstateAuthInternalServerError => InternalServerError
+    case r: EstateAuthResponse => Ok(Json.toJson(r))
   }
 
-  private def authoriseAgent[A](request: IdentifierRequest[A]): TrustAuthResponse = {
+  private def authoriseAgent[A](request: IdentifierRequest[A]): EstateAuthResponse = {
 
     getAgentReferenceNumber(request.user.enrolments) match {
       case Some(arn) if arn.nonEmpty =>
-        TrustAuthAgentAllowed(arn)
+        EstateAuthAgentAllowed(arn)
       case _ =>
         Logger.info(s"[authoriseAgent] not a valid agent service account")
-        TrustAuthDenied(config.createAgentServicesAccountUrl)
+        EstateAuthDenied(appConfig.createAgentServicesAccountUrl)
     }
   }
 
@@ -94,64 +94,64 @@ class EstatesAuthController @Inject()(val controllerComponents: MessagesControll
       .flatMap(_.identifiers.find(_.key equals "AgentReferenceNumber"))
       .collect { case EnrolmentIdentifier(_, value) => value }
 
-  private def checkIfTrustIsClaimedAndTrustIV[A](utr: String)
+  private def checkIfEstateIsClaimedAndEstateIV[A](utr: String)
                                                 (implicit request: IdentifierRequest[A],
-                                                 hc: HeaderCarrier): Future[TrustAuthResponse] = {
+                                                 hc: HeaderCarrier): Future[EstateAuthResponse] = {
 
-    val userEnrolled = checkForTrustEnrolmentForUTR(utr)
+    val userEnrolled = checkForEstateEnrolmentForUTR(utr)
 
-    Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] authenticating user for $utr")
+    Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] authenticating user for $utr")
 
     if (userEnrolled) {
-      Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] user is enrolled for $utr")
+      Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] user is enrolled for $utr")
 
-      trustsIV.authenticate(
+      estatesIV.authenticate(
         utr = utr,
         onIVRelationshipExisting = {
-          Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] user has an IV session for $utr")
-          Future.successful(TrustAuthAllowed())
+          Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] user has an IV session for $utr")
+          Future.successful(EstateAuthAllowed())
         },
         onIVRelationshipNotExisting = {
-          Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] user does not have an IV session for $utr")
-          Future.successful(TrustAuthDenied(config.maintainThisTrust))
+          Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] user does not have an IV session for $utr")
+          Future.successful(EstateAuthDenied(appConfig.maintainThisEstate))
         }
       )
     } else {
       enrolmentStoreConnector.checkIfAlreadyClaimed(utr) flatMap {
         case AlreadyClaimed =>
-          Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] user is not enrolled for $utr and the trust is already claimed")
-          Future.successful(TrustAuthDenied(config.alreadyClaimedUrl))
+          Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] user is not enrolled for $utr and the estate is already claimed")
+          Future.successful(EstateAuthDenied(appConfig.alreadyClaimedUrl))
 
         case NotClaimed =>
-          Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] user is not enrolled for $utr and the trust is not claimed")
-          Future.successful(TrustAuthDenied(config.claimATrustUrl(utr)))
+          Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] user is not enrolled for $utr and the estate is not claimed")
+          Future.successful(EstateAuthDenied(appConfig.claimAnEstateUrl(utr)))
         case _ =>
-          Logger.info(s"[checkIfTrustIsClaimedAndTrustIV] unable to determine if $utr is already claimed")
-          Future.successful(TrustAuthInternalServerError)
+          Logger.info(s"[checkIfEstateIsClaimedAndEstateIV] unable to determine if $utr is already claimed")
+          Future.successful(EstateAuthInternalServerError)
       }
     }
   }
 
   private def checkIfAgentAuthorised[A](utr: String)
                                        (implicit request: Request[A],
-                                        hc: HeaderCarrier): Future[TrustAuthResponse] = {
+                                        hc: HeaderCarrier): Future[EstateAuthResponse] = {
 
     Logger.info(s"[checkIfAgentAuthorised] authenticating agent for $utr")
 
     enrolmentStoreConnector.checkIfAlreadyClaimed(utr) flatMap {
       case NotClaimed =>
-        Logger.info(s"[checkIfAgentAuthorised] agent not authenticated for $utr, trust is not claimed")
-        Future.successful(TrustAuthDenied(config.trustNotClaimedUrl))
+        Logger.info(s"[checkIfAgentAuthorised] agent not authenticated for $utr, estate is not claimed")
+        Future.successful(EstateAuthDenied(appConfig.estateNotClaimedUrl))
       case AlreadyClaimed =>
         Logger.info(s"[checkIfAgentAuthorised] $utr is claimed, checking if agent is authorised")
         delegatedEnrolment.authenticate(utr)
       case _ =>
         Logger.info(s"[checkIfAgentAuthorised] unable to determine if $utr is already claimed")
-        Future.successful(TrustAuthInternalServerError)
+        Future.successful(EstateAuthInternalServerError)
     }
   }
 
-  private def checkForTrustEnrolmentForUTR[A](utr: String)(implicit request: IdentifierRequest[A]): Boolean =
+  private def checkForEstateEnrolmentForUTR[A](utr: String)(implicit request: IdentifierRequest[A]): Boolean =
     request.user.enrolments.enrolments
       .find(_.key equals "HMRC-TERS-ORG")
       .flatMap(_.identifiers.find(_.key equals "SAUTR"))

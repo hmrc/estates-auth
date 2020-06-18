@@ -34,7 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]
 
 class AuthenticatedIdentifierAction @Inject()(
-                                               trustsAuthFunctions: TrustsAuthorisedFunctions,
+                                               estatesAuthFunctions: EstatesAuthorisedFunctions,
                                                val parser: BodyParsers.Default
                                              )
                                              (implicit val executionContext: ExecutionContext) extends IdentifierAction {
@@ -47,7 +47,7 @@ class AuthenticatedIdentifierAction @Inject()(
       Retrievals.affinityGroup and
       Retrievals.allEnrolments
 
-    trustsAuthFunctions.authorised().retrieve(retrievals) {
+    estatesAuthFunctions.authorised().retrieve(retrievals) {
       case Some(internalId) ~ Some(Agent) ~ enrolments =>
         Logger.info(s"[AuthenticatedIdentifierAction] successfully identified as an Agent")
         block(IdentifierRequest(request, AgentUser(internalId, enrolments)))

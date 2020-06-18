@@ -19,27 +19,28 @@ package uk.gov.hmrc.estatesauth.services
 import com.google.inject.Inject
 import play.api.Logger
 import uk.gov.hmrc.auth.core.{BusinessKey, FailedRelationship, Relationship}
-import uk.gov.hmrc.estatesauth.controllers.actions.TrustsAuthorisedFunctions
-import uk.gov.hmrc.estatesauth.models.TrustAuthResponse
+import uk.gov.hmrc.estatesauth.config.AppConfig
+import uk.gov.hmrc.estatesauth.controllers.actions.EstatesAuthorisedFunctions
+import uk.gov.hmrc.estatesauth.models.EstateAuthResponse
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class TrustsIV @Inject()(trustsAuth: TrustsAuthorisedFunctions) {
+class EstatesIV @Inject()(estatesAuth: EstatesAuthorisedFunctions, appConfig: AppConfig) {
 
   def authenticate[A](utr: String,
-                      onIVRelationshipExisting: Future[TrustAuthResponse],
-                      onIVRelationshipNotExisting: Future[TrustAuthResponse]
-                     )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[TrustAuthResponse] = {
+                      onIVRelationshipExisting: Future[EstateAuthResponse],
+                      onIVRelationshipNotExisting: Future[EstateAuthResponse]
+                     )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
 
-    val trustIVRelationship =
-      Relationship(trustsAuth.config.relationshipName, Set(BusinessKey(trustsAuth.config.relationshipIdentifier, utr)))
+    val estateIVRelationship =
+      Relationship(appConfig.relationshipName, Set(BusinessKey(appConfig.relationshipIdentifier, utr)))
 
-    trustsAuth.authorised(trustIVRelationship) {
+    estatesAuth.authorised(estateIVRelationship) {
       onIVRelationshipExisting
     } recoverWith {
       case FailedRelationship(msg) =>
-        Logger.info(s"[IdentifyForPlayback] Relationship does not exist in Trust IV for user due to $msg")
+        Logger.info(s"[IdentifyForPlayback] Relationship does not exist in Estate IV for user due to $msg")
         onIVRelationshipNotExisting
     }
   }

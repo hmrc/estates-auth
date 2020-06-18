@@ -80,7 +80,7 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with MustMatchers with W
       }
     }
 
-    "Cannot access trust when" - {
+    "Cannot access estate when" - {
       "non-empty principalUserIds retrieved" in {
 
         wiremock(

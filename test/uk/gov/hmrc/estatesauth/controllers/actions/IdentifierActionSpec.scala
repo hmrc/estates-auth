@@ -29,7 +29,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{AgentInformation, Retrieval, ~}
 import play.api.inject.bind
 import uk.gov.hmrc.estatesauth.config.AppConfig
-import uk.gov.hmrc.estatesauth.controllers.actions.{AuthenticatedIdentifierAction, FakeIdentifierAction, IdentifierAction, TrustsAuthorisedFunctions}
+import uk.gov.hmrc.estatesauth.controllers.actions.{AuthenticatedIdentifierAction, FakeIdentifierAction, IdentifierAction, EstatesAuthorisedFunctions}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -38,18 +38,17 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
   type RetrievalType = Option[String] ~ Option[AffinityGroup] ~ Enrolments
 
-  val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
+  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
   class Harness(authAction: IdentifierAction) {
     def onPageLoad(): Action[AnyContent] = authAction { _ => Results.Ok }
   }
 
-  lazy val trustsAuth = new TrustsAuthorisedFunctions(mockAuthConnector, appConfig)
+  private lazy val estatesAuth = new EstatesAuthorisedFunctions(mockAuthConnector)
 
   private val noEnrollment = Enrolments(Set())
 
-  val agentInformation = AgentInformation(None, None, None)
+  private val agentInformation = AgentInformation(None, None, None)
 
   private def fakeRequest = FakeRequest("", "")
 
@@ -80,7 +79,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolment, agentInformation))
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -97,7 +96,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Organisation, agentEnrolment, agentInformation))
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -114,7 +113,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Individual, noEnrollment, agentInformation))
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -131,7 +130,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed MissingBearerToken())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -148,7 +147,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed BearerTokenExpired())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -165,7 +164,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed InsufficientEnrolments())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -182,7 +181,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed InsufficientConfidenceLevel())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -199,7 +198,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed UnsupportedAuthProvider())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -216,7 +215,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed UnsupportedAffinityGroup())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 
@@ -233,7 +232,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())) thenReturn (Future failed UnsupportedCredentialRole())
 
-        val action = new AuthenticatedIdentifierAction(trustsAuth, bodyParsers)
+        val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
         val result = controller.onPageLoad()(fakeRequest)
 

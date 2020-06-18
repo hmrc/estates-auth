@@ -31,7 +31,7 @@ import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
 import uk.gov.hmrc.estatesauth.config.AppConfig
 import uk.gov.hmrc.estatesauth.connectors.EnrolmentStoreConnector
-import uk.gov.hmrc.estatesauth.controllers.actions.TrustsAuthorisedFunctions
+import uk.gov.hmrc.estatesauth.controllers.actions.EstatesAuthorisedFunctions
 import uk.gov.hmrc.estatesauth.models.EnrolmentStoreResponse._
 import uk.gov.hmrc.estatesauth.models._
 import uk.gov.hmrc.http.HeaderCarrier
@@ -47,11 +47,11 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
   private val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   private val agentEnrolment = Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeARN")), "Activated", None)
-  private val trustsEnrolment = Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", utr)), "Activated", None)
+  private val estatesEnrolment = Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", utr)), "Activated", None)
 
   private val enrolments = Enrolments(Set(
     agentEnrolment,
-    trustsEnrolment
+    estatesEnrolment
   ))
 
   private val mockAuthConnector: AuthConnector = mock[AuthConnector]
@@ -62,18 +62,18 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
   private def authRetrievals(affinityGroup: AffinityGroup, enrolment: Enrolments) =
     Future.successful(new ~(new ~(Some("id"), Some(affinityGroup)), enrolment))
 
-  private lazy val trustsAuth = new TrustsAuthorisedFunctions(mockAuthConnector, appConfig)
+  private lazy val estatesAuth = new EstatesAuthorisedFunctions(mockAuthConnector)
 
   private def applicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
-      .overrides(bind[TrustsAuthorisedFunctions].toInstance(trustsAuth))
+      .overrides(bind[EstatesAuthorisedFunctions].toInstance(estatesAuth))
       .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
 
   "invoking the EstatesAuthController" when {
 
     "authenticating an agent" when {
 
-      "trust is claimed and agent is authorised" must {
+      "estate is claimed and agent is authorised" must {
 
         "return OK" in {
 
@@ -99,14 +99,14 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           val result = route(app, request).value
           status(result) mustBe OK
 
-          val response = contentAsJson(result).as[TrustAuthResponse]
-          response mustBe TrustAuthAllowed()
+          val response = contentAsJson(result).as[EstateAuthResponse]
+          response mustBe EstateAuthAllowed()
         }
       }
 
-      "trust has not been claimed by a trustee" must {
+      "estate has not been claimed by a representative" must {
 
-        "redirect to trust not claimed page" in  {
+        "redirect to estate not claimed page" in  {
 
           when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
@@ -121,12 +121,12 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           val result = route(app, request).value
           status(result) mustBe OK
 
-          val response = contentAsJson(result).as[TrustAuthResponse]
-          response mustBe TrustAuthDenied(appConfig.trustNotClaimedUrl)
+          val response = contentAsJson(result).as[EstateAuthResponse]
+          response mustBe EstateAuthDenied(appConfig.estateNotClaimedUrl)
         }
       }
 
-      "agent has not been authorised for any trusts" must {
+      "agent has not been authorised for any estates" must {
 
         "redirect to agent not authorised" in {
 
@@ -154,12 +154,12 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           val result = route(app, request).value
           status(result) mustBe OK
 
-          val response = contentAsJson(result).as[TrustAuthResponse]
-          response mustBe TrustAuthDenied(appConfig.agentNotAuthorisedUrl)
+          val response = contentAsJson(result).as[EstateAuthResponse]
+          response mustBe EstateAuthDenied(appConfig.agentNotAuthorisedUrl)
         }
       }
 
-      "an agent that has a trusts enrolment without matching submitted utr" must {
+      "an agent that has an estates enrolment without matching submitted utr" must {
 
         "redirect to agent not authorised" in {
 
@@ -191,8 +191,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           val result = route(app, request).value
           status(result) mustBe OK
 
-          val response = contentAsJson(result).as[TrustAuthResponse]
-          response mustBe TrustAuthDenied(appConfig.agentNotAuthorisedUrl)
+          val response = contentAsJson(result).as[EstateAuthResponse]
+          response mustBe EstateAuthDenied(appConfig.agentNotAuthorisedUrl)
         }
       }
 
@@ -200,13 +200,13 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
     "authenticating an organisation user" when {
 
-      "organisation user has an enrolment for the trust" when {
+      "organisation user has an enrolment for the estate" when {
 
-        "relationship does not exist in Trust IV" must {
+        "relationship does not exist in Estate IV" must {
 
-          "redirect to trust IV for a non claiming check" in {
+          "redirect to estate IV for a non claiming check" in {
 
-            val enrolments = Enrolments(Set(trustsEnrolment))
+            val enrolments = Enrolments(Set(estatesEnrolment))
 
             when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
@@ -221,17 +221,17 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             val result = route(app, request).value
             status(result) mustBe OK
 
-            val response = contentAsJson(result).as[TrustAuthDenied]
-            response.redirectUrl must include("/maintain-this-trust")
+            val response = contentAsJson(result).as[EstateAuthDenied]
+            response.redirectUrl must include("/maintain-this-estate")
           }
 
         }
 
-        "relationship does exist in Trust IV" must {
+        "relationship does exist in Estate IV" must {
 
           "return OK" in {
 
-            val enrolments = Enrolments(Set(trustsEnrolment))
+            val enrolments = Enrolments(Set(estatesEnrolment))
 
             when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
@@ -246,13 +246,13 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             val result = route(app, request).value
             status(result) mustBe OK
 
-            val response = contentAsJson(result).as[TrustAuthResponse]
-            response mustBe TrustAuthAllowed()
+            val response = contentAsJson(result).as[EstateAuthResponse]
+            response mustBe EstateAuthAllowed()
           }
         }
       }
 
-      "organisation user has no enrolment for the trust" when {
+      "organisation user has no enrolment for the estate" when {
 
         "unable to determine if the UTR belongs to a different org account" must {
 
@@ -293,14 +293,14 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             val result = route(app, request).value
             status(result) mustBe OK
 
-            val response = contentAsJson(result).as[TrustAuthResponse]
-            response mustBe TrustAuthDenied(appConfig.alreadyClaimedUrl)
+            val response = contentAsJson(result).as[EstateAuthResponse]
+            response mustBe EstateAuthDenied(appConfig.alreadyClaimedUrl)
           }
         }
 
         "utr is not already claimed by an org account" must {
 
-          "redirect to claim a trust" in {
+          "redirect to claim an estate" in {
 
             val enrolments = Enrolments(Set())
 
@@ -317,8 +317,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             val result = route(app, request).value
             status(result) mustBe OK
 
-            val response = contentAsJson(result).as[TrustAuthDenied]
-            response.redirectUrl must include("/claim-a-trust")
+            val response = contentAsJson(result).as[EstateAuthDenied]
+            response.redirectUrl must include("/claim-an-estate")
           }
         }
       }
@@ -359,8 +359,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
         status(result) mustBe OK
 
-        val response = contentAsJson(result).as[TrustAuthResponse]
-        response mustBe TrustAuthDenied(appConfig.createAgentServicesAccountUrl)
+        val response = contentAsJson(result).as[EstateAuthResponse]
+        response mustBe EstateAuthDenied(appConfig.createAgentServicesAccountUrl)
       }
     }
     "Agent user has correct enrolled in Agent Services Account" must {
@@ -377,8 +377,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
         status(result) mustBe OK
 
-        val response = contentAsJson(result).as[TrustAuthResponse]
-        response mustBe TrustAuthAgentAllowed("SomeARN")
+        val response = contentAsJson(result).as[EstateAuthResponse]
+        response mustBe EstateAuthAgentAllowed("SomeARN")
       }
     }
   }
