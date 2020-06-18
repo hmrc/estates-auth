@@ -18,13 +18,30 @@ package uk.gov.hmrc.estatesauth.config
 
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject()(config: Configuration, servicesConfig: ServicesConfig) {
+class AppConfig @Inject()(config: Configuration) {
 
-  val authBaseUrl: String = servicesConfig.baseUrl("auth")
+  val authBaseUrl: String = config.get[Service]("microservice.services.auth").baseUrl
 
   val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
   val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
+
+  lazy val unauthorisedUrl: String = config.get[String]("urls.unauthorised")
+  lazy val alreadyClaimedUrl: String = config.get[String]("urls.alreadyClaimed")
+  lazy val estateNotClaimedUrl: String = config.get[String]("urls.estateNotClaimed")
+  lazy val agentNotAuthorisedUrl: String = config.get[String]("urls.agentNotAuthorised")
+  lazy val createAgentServicesAccountUrl: String = config.get[String]("urls.createAgentServicesAccount")
+  lazy val maintainThisEstate: String = config.get[String]("urls.maintainThisEstate")
+
+  def claimAnEstateUrl(utr: String) =
+    s"${config.get[String]("urls.startClaimAnEstate")}/$utr"
+
+  lazy val relationshipName: String =
+    config.get[String]("microservice.services.self.relationship-establishment.name")
+  lazy val relationshipIdentifier: String =
+    config.get[String]("microservice.services.self.relationship-establishment.identifier")
+
+  lazy val enrolmentStoreProxyUrl: String = config.get[Service]("microservice.services.enrolment-store-proxy").baseUrl
+
 }

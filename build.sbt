@@ -8,8 +8,8 @@ val appName = "estates-auth"
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
-    ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;trusts.Routes.*;estates.Routes.*;prod.*;testOnlyDoNotUseInAppConf.*;" +
-      "uk.gov.hmrc.BuildInfo;app.*;prod.*;uk.gov.hmrc.trusts-auth.config.*",
+    ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;estates.Routes.*;prod.*;testOnlyDoNotUseInAppConf.*;" +
+      "uk.gov.hmrc.BuildInfo;app.*;prod.*;uk.gov.hmrc.estates-auth.config.*",
     ScoverageKeys.coverageMinimum := 80,
     ScoverageKeys.coverageFailOnMinimum := false,
     ScoverageKeys.coverageHighlighting := true
@@ -21,8 +21,7 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     majorVersion                     := 0,
     libraryDependencies              ++= AppDependencies.compile ++ AppDependencies.test,
-      PlayKeys.playDefaultPort := 8836
-
+    PlayKeys.playDefaultPort         := 8836
   )
   .settings(publishingSettings: _*)
   .settings(scoverageSettings)
