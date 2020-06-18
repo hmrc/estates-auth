@@ -1,3 +1,4 @@
 # microservice specific routes
 
-GET        /hello-world             uk.gov.hmrc.estatesauth.controllers.MicroserviceHelloWorldController.hello
+GET        /authorised/:utr         uk.gov.hmrc.estatesauth.controllers.EstatesAuthController.authorisedForUtr(utr: String)
+GET        /agent-authorised        uk.gov.hmrc.estatesauth.controllers.EstatesAuthController.agentAuthorised()
