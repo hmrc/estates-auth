@@ -32,6 +32,6 @@ class EnrolmentStoreConnector @Inject()(http: HttpClient, config: AppConfig) {
   }
 
   def checkIfAlreadyClaimed(utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] =
-    http.GET[EnrolmentStoreResponse](enrolmentsEndpoint(utr))(EnrolmentStoreResponse.httpReads, hc, ec)
+    http.GET[EnrolmentStoreResponse](enrolmentsEndpoint(utr))(EnrolmentStoreResponse.httpReads(utr), hc, ec)
 
 }

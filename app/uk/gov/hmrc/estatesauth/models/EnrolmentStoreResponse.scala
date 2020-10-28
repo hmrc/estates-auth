@@ -19,11 +19,14 @@ package uk.gov.hmrc.estatesauth.models
 import play.api.Logger
 import play.api.http.Status._
 import play.api.libs.json._
-import uk.gov.hmrc.http.{HttpReads, HttpResponse}
+import uk.gov.hmrc.estatesauth.utils.Session
+import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 
 sealed trait EnrolmentStoreResponse
 
 object EnrolmentStoreResponse {
+
+  private val logger: Logger = Logger(getClass)
 
   implicit val format: Format[EnrolmentStore] = Json.format[EnrolmentStore]
 
@@ -41,32 +44,35 @@ object EnrolmentStoreResponse {
 
   case object AlreadyClaimed extends EnrolmentStoreResponse
 
-  implicit lazy val httpReads: HttpReads[EnrolmentStoreResponse] =
+  implicit def httpReads(utr: String)(implicit hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
     new HttpReads[EnrolmentStoreResponse] {
       override def read(method: String, url: String, response: HttpResponse): EnrolmentStoreResponse = {
-        Logger.debug(s"[EnrolmentStoreResponse] response status received from ES0 api: ${response.status}")
+        logger.debug(s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}")
 
         response.status match {
           case OK =>
             response.json.as[EnrolmentStore] match {
               case EnrolmentStore(Seq(), _) =>
-                Logger.info(s"[EnrolmentStoreResponse] UTR has not been claimed")
+                logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has not been claimed")
                 NotClaimed
               case _ =>
-                Logger.info(s"[EnrolmentStoreResponse] UTR has already been claimed")
+                logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has already been claimed")
                 AlreadyClaimed
             }
           case NO_CONTENT =>
-            Logger.info(s"[EnrolmentStoreResponse] UTR is not claimed or delegated")
+            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR is not claimed or delegated")
             NotClaimed
           case SERVICE_UNAVAILABLE =>
+            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received ServiceUnavailable response")
             ServiceUnavailable
           case FORBIDDEN =>
+            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received Forbidden response")
             Forbidden
           case BAD_REQUEST =>
+            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received BadRequest response")
             BadRequest
           case _ =>
-            Logger.info(s"[EnrolmentStoreResponse] unexpected response from EnrolmentStore")
+            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] unexpected response from EnrolmentStore")
             ServerError
         }
       }
