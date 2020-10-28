@@ -22,11 +22,14 @@ import uk.gov.hmrc.auth.core.{BusinessKey, FailedRelationship, Relationship}
 import uk.gov.hmrc.estatesauth.config.AppConfig
 import uk.gov.hmrc.estatesauth.controllers.actions.EstatesAuthorisedFunctions
 import uk.gov.hmrc.estatesauth.models.EstateAuthResponse
+import uk.gov.hmrc.estatesauth.utils.Session
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class EstatesIV @Inject()(estatesAuth: EstatesAuthorisedFunctions, appConfig: AppConfig) {
+
+  private val logger: Logger = Logger(getClass)
 
   def authenticate[A](utr: String,
                       onIVRelationshipExisting: Future[EstateAuthResponse],
@@ -40,7 +43,7 @@ class EstatesIV @Inject()(estatesAuth: EstatesAuthorisedFunctions, appConfig: Ap
       onIVRelationshipExisting
     } recoverWith {
       case FailedRelationship(msg) =>
-        Logger.info(s"[IdentifyForPlayback] Relationship does not exist in Estate IV for user due to $msg")
+        logger.info(s"[authenticate][Session ID: ${Session.id(hc)}][UTR: $utr] Relationship does not exist in Estate IV for user due to $msg")
         onIVRelationshipNotExisting
     }
   }
