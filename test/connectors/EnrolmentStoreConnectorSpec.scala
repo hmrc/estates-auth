@@ -25,8 +25,6 @@ import models.EnrolmentStoreResponse._
 import utils.WireMockHelper
 import uk.gov.hmrc.http.HeaderCarrier
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
 class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with MustMatchers with WireMockHelper {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()

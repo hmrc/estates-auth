@@ -135,9 +135,8 @@ class EstatesAuthController @Inject()(val controllerComponents: MessagesControll
     }
   }
 
-  private def checkIfAgentAuthorised[A](utr: String)
-                                       (implicit request: Request[A],
-                                        hc: HeaderCarrier): Future[EstateAuthResponse] = {
+  private def checkIfAgentAuthorised(utr: String)
+                                       (implicit hc: HeaderCarrier): Future[EstateAuthResponse] = {
 
     implicit val fn: FunctionName = FunctionName("checkIfAgentAuthorised")
     logger.info(s"$loggingPrefix authenticating agent for $utr")
