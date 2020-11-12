@@ -32,18 +32,17 @@ import services.{AgentAuthorisedForDelegatedEnrolment, EstatesIV}
 import utils.{FunctionName, Session}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.HeaderCarrierConverter
-import uk.gov.hmrc.play.bootstrap.controller.FrontendBaseController
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EstatesAuthController @Inject()(val controllerComponents: MessagesControllerComponents,
-                                      identifierAction: IdentifierAction,
+class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
                                       enrolmentStoreConnector: EnrolmentStoreConnector,
                                       appConfig: AppConfig,
                                       estatesIV: EstatesIV,
                                       delegatedEnrolment: AgentAuthorisedForDelegatedEnrolment
-                               )(implicit ec: ExecutionContext) extends FrontendBaseController with I18nSupport {
+                               )(implicit cc: ControllerComponents, ec: ExecutionContext) extends BackendController(cc) with I18nSupport {
   private val logger: Logger = Logger(getClass)
   private def loggingPrefix(implicit fn: FunctionName, hc: HeaderCarrier) = s"[$fn][Session ID: ${Session.id(hc)}]"
 
