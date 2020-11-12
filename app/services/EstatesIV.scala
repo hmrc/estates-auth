@@ -17,7 +17,7 @@
 package services
 
 import com.google.inject.Inject
-import play.api.Logger
+import play.api.Logging
 import uk.gov.hmrc.auth.core.{BusinessKey, FailedRelationship, Relationship}
 import config.AppConfig
 import controllers.actions.EstatesAuthorisedFunctions
@@ -27,9 +27,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EstatesIV @Inject()(estatesAuth: EstatesAuthorisedFunctions, appConfig: AppConfig) {
-
-  private val logger: Logger = Logger(getClass)
+class EstatesIV @Inject()(estatesAuth: EstatesAuthorisedFunctions, appConfig: AppConfig) extends Logging {
 
   def authenticate[A](utr: String,
                       onIVRelationshipExisting: Future[EstateAuthResponse],
