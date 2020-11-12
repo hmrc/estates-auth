@@ -17,7 +17,7 @@
 package controllers
 
 import com.google.inject.{Inject, Singleton}
-import play.api.Logger
+import play.api.Logging
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -42,8 +42,9 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
                                       appConfig: AppConfig,
                                       estatesIV: EstatesIV,
                                       delegatedEnrolment: AgentAuthorisedForDelegatedEnrolment
-                               )(implicit cc: ControllerComponents, ec: ExecutionContext) extends BackendController(cc) with I18nSupport {
-  private val logger: Logger = Logger(getClass)
+                               )(implicit cc: ControllerComponents, ec: ExecutionContext
+) extends BackendController(cc) with I18nSupport with Logging {
+
   private def loggingPrefix(implicit fn: FunctionName, hc: HeaderCarrier) = s"[$fn][Session ID: ${Session.id(hc)}]"
 
   def authorisedForUtr(utr: String): Action[AnyContent] = identifierAction.async {

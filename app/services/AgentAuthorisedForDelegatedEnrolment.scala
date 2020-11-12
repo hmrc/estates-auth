@@ -17,7 +17,7 @@
 package services
 
 import com.google.inject.Inject
-import play.api.Logger
+import play.api.Logging
 import uk.gov.hmrc.auth.core.{Enrolment, InsufficientEnrolments}
 import config.AppConfig
 import controllers.actions.EstatesAuthorisedFunctions
@@ -27,9 +27,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AgentAuthorisedForDelegatedEnrolment @Inject()(estatesAuth: EstatesAuthorisedFunctions, config: AppConfig) {
-
-  private val logger: Logger = Logger(getClass)
+class AgentAuthorisedForDelegatedEnrolment @Inject()(estatesAuth: EstatesAuthorisedFunctions, config: AppConfig) extends Logging {
 
   def authenticate[A](utr: String)
                      (implicit hc: HeaderCarrier,
