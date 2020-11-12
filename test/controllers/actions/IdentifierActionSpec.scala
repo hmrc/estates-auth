@@ -21,15 +21,13 @@ import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{AgentInformation, Retrieval, ~}
-import play.api.inject.bind
-import config.AppConfig
-import controllers.actions.{AuthenticatedIdentifierAction, FakeIdentifierAction, IdentifierAction, EstatesAuthorisedFunctions}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
