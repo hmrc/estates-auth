@@ -31,7 +31,7 @@ import models.EnrolmentStoreResponse._
 import services.{AgentAuthorisedForDelegatedEnrolment, EstatesIV}
 import utils.{FunctionName, Session}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,7 +49,7 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
 
   def authorisedForUtr(utr: String): Action[AnyContent] = identifierAction.async {
     implicit request =>
-      implicit val hc : HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+      implicit val hc : HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
       mapResult(request.user.affinityGroup match {
         case Agent =>
@@ -83,7 +83,7 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
       case Some(arn) if arn.nonEmpty =>
         EstateAuthAgentAllowed(arn)
       case _ =>
-        implicit val hc : HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+        implicit val hc : HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
         implicit val fn: FunctionName = FunctionName("checkIfEstateIsClaimedAndEstateIV")
         logger.info(s"$loggingPrefix not a valid agent service account")
         EstateAuthDenied(appConfig.createAgentServicesAccountUrl)
