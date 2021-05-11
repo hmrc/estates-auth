@@ -27,7 +27,7 @@ import uk.gov.hmrc.auth.core.retrieve.~
 import models._
 import utils.Session
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
-import uk.gov.hmrc.play.HeaderCarrierConverter
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,7 +42,7 @@ class AuthenticatedIdentifierAction @Inject()(
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromHeadersAndSession(request.headers)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     val retrievals = Retrievals.internalId and
       Retrievals.affinityGroup and
