@@ -29,6 +29,4 @@ object AppDependencies {
     "com.typesafe.akka" %% "akka-actor_2.12" % akkaVersion,
     "com.typesafe.akka" %% "akka-http-core_2.12" % akkaHttpVersion
   )
-
-
 }
