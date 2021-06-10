@@ -103,28 +103,6 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
         }
       }
 
-      "estate has not been claimed by a representative" must {
-
-        "redirect to estate not claimed page" in  {
-
-          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
-            .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
-
-          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any[HeaderCarrier], any[ExecutionContext]))
-            .thenReturn(Future.successful(NotClaimed))
-
-          val app = applicationBuilder().build()
-
-          val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
-
-          val result = route(app, request).value
-          status(result) mustBe OK
-
-          val response = contentAsJson(result).as[EstateAuthResponse]
-          response mustBe EstateAuthDenied(appConfig.estateNotClaimedUrl)
-        }
-      }
-
       "agent has not been authorised for any estates" must {
 
         "redirect to agent not authorised" in {
