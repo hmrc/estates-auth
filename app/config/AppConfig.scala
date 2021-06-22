@@ -43,5 +43,5 @@ class AppConfig @Inject()(config: Configuration) {
     config.get[String]("microservice.services.self.relationship-establishment.identifier")
 
   lazy val enrolmentStoreProxyUrl: String = config.get[Service]("microservice.services.enrolment-store-proxy").baseUrl
-
+  lazy val primaryEnrolmentCheckEnabled: Boolean = config.get[Boolean]("features.primaryEnrolmentCheck.enabled")
 }

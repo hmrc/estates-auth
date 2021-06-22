@@ -67,6 +67,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
     new GuiceApplicationBuilder()
       .overrides(bind[EstatesAuthorisedFunctions].toInstance(estatesAuth))
       .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+      .configure(Map("features.primaryEnrolmentCheck.enabled" -> false))
+
 
   "invoking the EstatesAuthController" when {
 
@@ -105,7 +107,7 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
       "estate has not been claimed by a representative" must {
 
-        "redirect to estate not claimed page" in  {
+        "redirect to estate not claimed page when primary enrolment check enabled" in {
 
           when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
@@ -113,7 +115,9 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(NotClaimed))
 
-          val app = applicationBuilder().build()
+          val app = applicationBuilder()
+            .configure(Map("features.primaryEnrolmentCheck.enabled" -> true))
+            .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -127,7 +131,7 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
       "agent has not been authorised for any estates" must {
 
-        "redirect to agent not authorised" in {
+        "redirect to agent not authorised when primary enrolment check enabled" in {
 
           val enrolments = Enrolments(Set(agentEnrolment))
 
@@ -146,7 +150,9 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
 
-          val app = applicationBuilder().build()
+          val app = applicationBuilder()
+            .configure(Map("features.primaryEnrolmentCheck.enabled" -> true))
+            .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -156,11 +162,12 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           val response = contentAsJson(result).as[EstateAuthResponse]
           response mustBe EstateAuthDenied(appConfig.agentNotAuthorisedUrl)
         }
+
       }
 
       "an agent that has an estates enrolment without matching submitted utr" must {
 
-        "redirect to agent not authorised" in {
+        "redirect to agent not authorised when primary enrolment check enabled" in {
 
           val enrolments = Enrolments(Set(
             agentEnrolment,
@@ -182,6 +189,38 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
           when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
+
+          val app = applicationBuilder()
+            .configure(Map("features.primaryEnrolmentCheck.enabled" -> true))
+            .build()
+
+          val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
+
+          val result = route(app, request).value
+          status(result) mustBe OK
+
+          val response = contentAsJson(result).as[EstateAuthResponse]
+          response mustBe EstateAuthDenied(appConfig.agentNotAuthorisedUrl)
+        }
+
+        "redirect to agent not authorised when primary enrolment check not enabled" in {
+
+          val enrolments = Enrolments(Set(
+            agentEnrolment,
+            Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", "1234567890")), "Activated", None)
+          ))
+
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+            .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
+
+          val predicatedMatcher = mEq(
+            Enrolment("HMRC-TERS-ORG")
+              .withIdentifier("SAUTR", utr)
+              .withDelegatedAuthRule("trust-auth")
+          )
+
+          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
+            .thenReturn(Future.failed(InsufficientEnrolments()))
 
           val app = applicationBuilder().build()
 

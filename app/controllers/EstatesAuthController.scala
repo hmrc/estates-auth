@@ -138,19 +138,24 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
   private def checkIfAgentAuthorised(utr: String)
                                        (implicit hc: HeaderCarrier): Future[EstateAuthResponse] = {
 
-    implicit val fn: FunctionName = FunctionName("checkIfAgentAuthorised")
-    logger.info(s"$loggingPrefix authenticating agent for $utr")
+    if (appConfig.primaryEnrolmentCheckEnabled) {
+      implicit val fn: FunctionName = FunctionName("checkIfAgentAuthorised")
+      logger.info(s"$loggingPrefix authenticating agent for $utr")
 
-    enrolmentStoreConnector.checkIfAlreadyClaimed(utr) flatMap {
-      case NotClaimed =>
-        logger.info(s"$loggingPrefix agent not authenticated for $utr, estate is not claimed")
-        Future.successful(EstateAuthDenied(appConfig.estateNotClaimedUrl))
-      case AlreadyClaimed =>
-        logger.info(s"$loggingPrefix $utr is claimed, checking if agent is authorised")
-        delegatedEnrolment.authenticate(utr)
-      case _ =>
-        logger.info(s"$loggingPrefix unable to determine if $utr is already claimed")
-        Future.successful(EstateAuthInternalServerError)
+      enrolmentStoreConnector.checkIfAlreadyClaimed(utr) flatMap {
+        case NotClaimed =>
+          logger.info(s"$loggingPrefix agent not authenticated for $utr, estate is not claimed")
+          Future.successful(EstateAuthDenied(appConfig.estateNotClaimedUrl))
+        case AlreadyClaimed =>
+          logger.info(s"$loggingPrefix $utr is claimed, checking if agent is authorised")
+          delegatedEnrolment.authenticate(utr)
+        case _ =>
+          logger.info(s"$loggingPrefix unable to determine if $utr is already claimed")
+          Future.successful(EstateAuthInternalServerError)
+      }
+    } else {
+      logger.info(s"[checkIfAgentAuthorised][Session ID: ${Session.id(hc)}] $utr checking if agent is authorised")
+      delegatedEnrolment.authenticate(utr)
     }
   }
 
