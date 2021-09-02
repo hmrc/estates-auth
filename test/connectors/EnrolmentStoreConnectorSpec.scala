@@ -17,15 +17,18 @@
 package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import org.scalatest.{AsyncFreeSpec, MustMatchers}
 import play.api.Application
 import play.api.http.Status
 import play.api.inject.guice.GuiceApplicationBuilder
 import models.EnrolmentStoreResponse._
+import org.scalatest.freespec.AsyncFreeSpec
+import org.scalatest.matchers.must.Matchers
 import utils.WireMockHelper
 import uk.gov.hmrc.http.HeaderCarrier
 
-class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with MustMatchers with WireMockHelper {
+import scala.concurrent.ExecutionContext.Implicits.global._
+
+class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireMockHelper {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
