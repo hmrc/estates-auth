@@ -4,13 +4,32 @@ import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "estates-auth"
 
+val excludedPackages = Seq(
+  "<empty>",
+  ".*Reverse.*",
+  ".*Routes.*",
+  ".*standardError*.*",
+  ".*main_template*.*",
+  "uk.gov.hmrc.BuildInfo",
+  "app.*",
+  "prod.*",
+  "config.*",
+  "testOnlyDoNotUseInAppConf.*",
+  "views.html.*",
+  "testOnly.*",
+  "com.kenshoo.play.metrics*.*",
+  ".*LocalDateService.*",
+  ".*LocalDateTimeService.*",
+  ".*RichJsValue.*",
+  ".*Repository.*"
+)
+
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
-    ScoverageKeys.coverageExcludedPackages := "<empty>;Reverse.*;estates.Routes.*;prod.*;testOnlyDoNotUseInAppConf.*;" +
-      "uk.gov.hmrc.BuildInfo;app.*;prod.*;uk.gov.hmrc.estates-auth.config.*",
+    ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
     ScoverageKeys.coverageMinimum := 80,
-    ScoverageKeys.coverageFailOnMinimum := false,
+    ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true
   )
 }
