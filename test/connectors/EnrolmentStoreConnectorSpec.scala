@@ -81,6 +81,43 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
       }
     }
 
+    "Estate not claimed" - {
+      "empty principalUserIds retrieved" in {
+
+        wiremock(
+          expectedStatus = Status.OK,
+          expectedResponse = Some(
+            s"""{
+               |    "principalUserIds": [
+               |    ],
+               |    "delegatedUserIds": [
+               |    ]
+               |}""".stripMargin
+          )
+        )
+
+        connector.checkIfAlreadyClaimed(identifier) map { result =>
+          result mustBe NotClaimed
+        }
+
+      }
+    }
+
+    "Internal Server Error" - {
+      "unexpected status received" in {
+
+        wiremock(
+          expectedStatus = Status.IM_A_TEAPOT,
+          expectedResponse = None
+        )
+
+        connector.checkIfAlreadyClaimed(identifier) map { result =>
+          result mustBe ServerError
+        }
+
+      }
+    }
+
     "Cannot access estate when" - {
       "non-empty principalUserIds retrieved" in {
 
