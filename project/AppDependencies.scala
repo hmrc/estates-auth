@@ -6,19 +6,20 @@ import sbt.{ModuleID, _}
 object AppDependencies {
 
   val compile = Seq(
-    "uk.gov.hmrc"             %% "bootstrap-backend-play-28"  % "5.8.0",
-    "com.typesafe.play"       %% "play-json-joda"             % "2.7.4"
+    "uk.gov.hmrc"             %% "bootstrap-backend-play-28"  % "5.24.0",
+    "com.typesafe.play"       %% "play-json-joda"             % "2.9.2"
   )
 
   val test = Seq(
-    "org.scalatest"           %% "scalatest"                % "3.2.7"                 % "test",
+    "org.scalatest"           %% "scalatest"                % "3.2.12"                 % "test",
     "com.typesafe.play"       %% "play-test"                % current                 % "test",
-    "org.pegdown"             %  "pegdown"                  % "1.6.0"                 % "test",
     "org.scalatestplus.play"  %% "scalatestplus-play"       % "5.1.0"                 % "test",
     "org.scalatestplus"       %% "scalatestplus-mockito"    % "1.0.0-M2"              % "test",
     "com.github.tomakehurst"  %  "wiremock-standalone"      % "2.27.2"                % "test",
-    "org.mockito"             %  "mockito-all"              % "1.10.19"               % "test",
-    "com.vladsch.flexmark"    % "flexmark-all"              % "0.35.10"                % "test"
+    "org.mockito"                 %  "mockito-all"              % "1.10.19"           % "test",
+    "org.mockito"                 %  "mockito-core"             % "4.6.1"             % "test",
+    "org.scalatestplus"           %% "mockito-3-12"             % "3.2.10.0"          % "test",
+    "com.vladsch.flexmark"    % "flexmark-all"              % "0.62.2"                % "test"
   )
 
   val akkaVersion = "2.6.7"
