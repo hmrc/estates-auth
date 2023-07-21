@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,37 +42,35 @@ object EnrolmentStoreResponse extends Logging {
 
   case object AlreadyClaimed extends EnrolmentStoreResponse
 
-  implicit def httpReads(utr: String)(implicit hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
-    new HttpReads[EnrolmentStoreResponse] {
-      override def read(method: String, url: String, response: HttpResponse): EnrolmentStoreResponse = {
-        logger.debug(s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}")
+  def httpReads(utr: String)(implicit hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
+    (_: String, _: String, response: HttpResponse) => {
+      logger.debug(s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}")
 
-        response.status match {
-          case OK =>
-            response.json.as[EnrolmentStore] match {
-              case EnrolmentStore(Seq(), _) =>
-                logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has not been claimed")
-                NotClaimed
-              case _ =>
-                logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has already been claimed")
-                AlreadyClaimed
-            }
-          case NO_CONTENT =>
-            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR is not claimed or delegated")
-            NotClaimed
-          case SERVICE_UNAVAILABLE =>
-            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received ServiceUnavailable response")
-            ServiceUnavailable
-          case FORBIDDEN =>
-            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received Forbidden response")
-            Forbidden
-          case BAD_REQUEST =>
-            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received BadRequest response")
-            BadRequest
-          case _ =>
-            logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] unexpected response from EnrolmentStore")
-            ServerError
-        }
+      response.status match {
+        case OK =>
+          response.json.as[EnrolmentStore] match {
+            case EnrolmentStore(Seq(), _) =>
+              logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has not been claimed")
+              NotClaimed
+            case _ =>
+              logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has already been claimed")
+              AlreadyClaimed
+          }
+        case NO_CONTENT =>
+          logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR is not claimed or delegated")
+          NotClaimed
+        case SERVICE_UNAVAILABLE =>
+          logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received ServiceUnavailable response")
+          ServiceUnavailable
+        case FORBIDDEN =>
+          logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received Forbidden response")
+          Forbidden
+        case BAD_REQUEST =>
+          logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received BadRequest response")
+          BadRequest
+        case _ =>
+          logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] unexpected response from EnrolmentStore")
+          ServerError
       }
     }
 }

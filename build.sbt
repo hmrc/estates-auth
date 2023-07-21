@@ -1,6 +1,4 @@
 import play.sbt.PlayImport.PlayKeys
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "estates-auth"
 
@@ -16,19 +14,14 @@ val excludedPackages = Seq(
   "config.*",
   "testOnlyDoNotUseInAppConf.*",
   "views.html.*",
-  "testOnly.*",
-  "com.kenshoo.play.metrics*.*",
-  ".*LocalDateService.*",
-  ".*LocalDateTimeService.*",
-  ".*RichJsValue.*",
-  ".*Repository.*"
+  "testOnly.*"
 )
 
 lazy val scoverageSettings = {
   import scoverage.ScoverageKeys
   Seq(
     ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
-    ScoverageKeys.coverageMinimumStmtTotal := 80,
+    ScoverageKeys.coverageMinimumStmtTotal := 90,
     ScoverageKeys.coverageFailOnMinimum := true,
     ScoverageKeys.coverageHighlighting := true
   )
@@ -38,24 +31,23 @@ lazy val microservice = Project(appName, file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
   .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
-    scalaVersion := "2.12.15",
-    SilencerSettings(),
+    scalaVersion := "2.13.11",
     inConfig(Test)(testSettings),
-    majorVersion                     := 0,
-    libraryDependencies              ++= AppDependencies.compile ++ AppDependencies.test,
-    dependencyOverrides              ++= AppDependencies.overrides,
-    PlayKeys.playDefaultPort         := 8836,
-    publishingSettings,
-    scoverageSettings
+    majorVersion := 0,
+    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    PlayKeys.playDefaultPort := 8836,
+    scoverageSettings,
+    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s")
   )
-  .configs(IntegrationTest)
-  .settings(integrationTestSettings(): _*)
-  .settings(resolvers += Resolver.jcenterRepo)
+  // To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
+  // Try to remove when sbt[ 1.8.0+ and scoverage is 2.0.7+
+  .settings(libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always))
 
-
-lazy val testSettings: Seq[Def.Setting[_]] = Seq(
+lazy val testSettings: Seq[Def.Setting[?]] = Seq(
   fork        := true,
   javaOptions ++= Seq(
     "-Dconfig.resource=test.application.conf"
   )
 )
+
+addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")

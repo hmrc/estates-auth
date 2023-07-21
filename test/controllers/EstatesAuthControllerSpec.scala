@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,27 @@
 
 package controllers
 
-import org.mockito.Matchers.{any, eq => mEq}
-import org.mockito.Mockito.when
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{EitherValues, RecoverMethods}
-import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.PlaySpec
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import base.SpecBase
+import config.AppConfig
+import connectors.EnrolmentStoreConnector
+import models.EnrolmentStoreResponse._
+import models._
+import org.mockito.ArgumentMatchers.{any, eq => mEq}
+import org.mockito.Mockito.{mock, when}
+import play.api.Application
 import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
-import config.AppConfig
-import connectors.EnrolmentStoreConnector
-import controllers.actions.EstatesAuthorisedFunctions
-import models.EnrolmentStoreResponse._
-import models._
 import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
-class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar with ScalaFutures with EitherValues with RecoverMethods {
+class EstatesAuthControllerSpec extends SpecBase {
 
   private val utr = "0987654321"
-
-  private val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   private val agentEnrolment = Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeARN")), "Activated", None)
   private val estatesEnrolment = Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", utr)), "Activated", None)
@@ -53,22 +46,18 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
     estatesEnrolment
   ))
 
-  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
-  private val mockEnrolmentStoreConnector: EnrolmentStoreConnector = mock[EnrolmentStoreConnector]
+  val mockEnrolmentStoreConnector: EnrolmentStoreConnector = mock(classOf[EnrolmentStoreConnector])
+
+  override lazy val app: Application = applicationBuilder()
+    .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+    .build()
+
+  lazy val appConfig: AppConfig = app.injector.instanceOf[AppConfig]
 
   private type RetrievalType = Option[String] ~ Option[AffinityGroup] ~ Enrolments
 
   private def authRetrievals(affinityGroup: AffinityGroup, enrolment: Enrolments) =
-    Future.successful(new ~(new ~(Some("id"), Some(affinityGroup)), enrolment))
-
-  private lazy val estatesAuth = new EstatesAuthorisedFunctions(mockAuthConnector)
-
-  private def applicationBuilder(): GuiceApplicationBuilder =
-    new GuiceApplicationBuilder()
-      .overrides(bind[EstatesAuthorisedFunctions].toInstance(estatesAuth))
-      .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
-      .configure(Map("features.primaryEnrolmentCheck.enabled" -> false))
-
+    Future.successful(new~(new~(Some("id"), Some(affinityGroup)), enrolment))
 
   "invoking the EstatesAuthController" when {
 
@@ -93,7 +82,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
 
-          val app = applicationBuilder().build()
+          val app = applicationBuilder()
+            .configure("features.primaryEnrolmentCheck.enabled" -> false)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+            .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -116,7 +108,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             .thenReturn(Future.successful(NotClaimed))
 
           val app = applicationBuilder()
-            .configure(Map("features.primaryEnrolmentCheck.enabled" -> true))
+            .configure("features.primaryEnrolmentCheck.enabled" -> true)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
             .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
@@ -151,7 +144,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             .thenReturn(Future.successful(AlreadyClaimed))
 
           val app = applicationBuilder()
-            .configure(Map("features.primaryEnrolmentCheck.enabled" -> true))
+            .configure("features.primaryEnrolmentCheck.enabled" -> true)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
             .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
@@ -191,7 +185,8 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             .thenReturn(Future.successful(AlreadyClaimed))
 
           val app = applicationBuilder()
-            .configure(Map("features.primaryEnrolmentCheck.enabled" -> true))
+            .configure("features.primaryEnrolmentCheck.enabled" -> true)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
             .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
@@ -222,7 +217,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
           when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
             .thenReturn(Future.failed(InsufficientEnrolments()))
 
-          val app = applicationBuilder().build()
+          val app = applicationBuilder()
+            .configure("features.primaryEnrolmentCheck.enabled" -> false)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+            .build()
 
           val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -252,7 +250,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             when(mockAuthConnector.authorise(any[Relationship], mEq(EmptyRetrieval))(any(), any()))
               .thenReturn(Future.failed(FailedRelationship()))
 
-            val app = applicationBuilder().build()
+            val app = applicationBuilder()
+              .configure("features.primaryEnrolmentCheck.enabled" -> false)
+              .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+              .build()
 
             val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -277,7 +278,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             when(mockAuthConnector.authorise(any[Relationship], mEq(EmptyRetrieval))(any(), any()))
               .thenReturn(Future.successful(()))
 
-            val app = applicationBuilder().build()
+            val app = applicationBuilder()
+              .configure("features.primaryEnrolmentCheck.enabled" -> false)
+              .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+              .build()
 
             val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -303,7 +307,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
               .thenReturn(Future.successful(ServerError))
 
-            val app = applicationBuilder().build()
+            val app = applicationBuilder()
+              .configure("features.primaryEnrolmentCheck.enabled" -> false)
+              .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+              .build()
 
             val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -324,7 +331,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
               .thenReturn(Future.successful(AlreadyClaimed))
 
-            val app = applicationBuilder().build()
+            val app = applicationBuilder()
+              .configure("features.primaryEnrolmentCheck.enabled" -> false)
+              .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+              .build()
 
             val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -348,7 +358,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
             when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
               .thenReturn(Future.successful(NotClaimed))
 
-            val app = applicationBuilder().build()
+            val app = applicationBuilder()
+              .configure("features.primaryEnrolmentCheck.enabled" -> false)
+              .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+              .build()
 
             val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
@@ -367,7 +380,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
     "redirect to the login page" in {
 
-      val app = applicationBuilder().build()
+      val app = applicationBuilder()
+        .configure("features.primaryEnrolmentCheck.enabled" -> false)
+        .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+        .build()
 
       when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
         .thenReturn(Future failed BearerTokenExpired())
@@ -387,7 +403,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
 
         val noEnrollment = Enrolments(Set())
 
-        val app = applicationBuilder().build()
+        val app = applicationBuilder()
+          .configure("features.primaryEnrolmentCheck.enabled" -> false)
+          .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+          .build()
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Agent, noEnrollment))
@@ -405,7 +424,10 @@ class EstatesAuthControllerSpec extends PlaySpec with GuiceOneAppPerSuite with M
       "allow authentication" in {
         val agentEnrolments = Enrolments(Set(agentEnrolment))
 
-        val app = applicationBuilder().build()
+        val app = applicationBuilder()
+          .configure("features.primaryEnrolmentCheck.enabled" -> false)
+          .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+          .build()
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolments))

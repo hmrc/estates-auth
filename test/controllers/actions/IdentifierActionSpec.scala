@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 package controllers.actions
 
-import org.mockito.Matchers.any
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito._
-import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.bind
@@ -32,11 +31,11 @@ import uk.gov.hmrc.auth.core.retrieve.{AgentInformation, Retrieval, ~}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPerSuite {
+class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
 
   type RetrievalType = Option[String] ~ Option[AffinityGroup] ~ Enrolments
 
-  private val mockAuthConnector: AuthConnector = mock[AuthConnector]
+  private val mockAuthConnector: AuthConnector = mock(classOf[AuthConnector])
 
   class Harness(authAction: IdentifierAction) {
     def onPageLoad(): Action[AnyContent] = authAction { _ => Results.Ok }
@@ -66,6 +65,7 @@ class IdentifierActionSpec extends PlaySpec with MockitoSugar with GuiceOneAppPe
       .overrides(
         bind[IdentifierAction].toInstance(new FakeIdentifierAction(bodyParsers, affinityGroup, enrolments))
       )
+
 
   "invoking an AuthenticatedIdentifier" when {
 
