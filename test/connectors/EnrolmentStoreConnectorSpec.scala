@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,44 +16,17 @@
 
 package connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock._
-import play.api.Application
-import play.api.http.Status
-import play.api.inject.guice.GuiceApplicationBuilder
+import base.SpecBase
 import models.EnrolmentStoreResponse._
-import org.scalatest.freespec.AsyncFreeSpec
-import org.scalatest.matchers.must.Matchers
-import utils.WireMockHelper
-import uk.gov.hmrc.http.HeaderCarrier
+import play.api.http.Status
 
-import scala.concurrent.ExecutionContext.Implicits.global._
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
 
-class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireMockHelper {
+class EnrolmentStoreConnectorSpec extends SpecBase {
 
-  implicit lazy val hc: HeaderCarrier = HeaderCarrier()
-
-  private def wiremock(expectedStatus: Int, expectedResponse: Option[String]) = {
-
-    val response = expectedResponse map { response =>
-      aResponse()
-        .withStatus(expectedStatus)
-        .withBody(response)
-    } getOrElse {
-      aResponse()
-        .withStatus(expectedStatus)
-    }
-
-    server.stubFor(get(urlEqualTo(enrolmentsUrl)).willReturn(response))
-
-  }
-
-  lazy val app: Application = new GuiceApplicationBuilder()
-    .configure(Seq(
-      "microservice.services.enrolment-store-proxy.port" -> server.port(),
-      "auditing.enabled" -> false
-    ): _*).build()
-
-  private lazy val connector = app.injector.instanceOf[EnrolmentStoreConnector]
+  lazy val enrolmentStoreConnector: EnrolmentStoreConnector = app.injector.instanceOf[EnrolmentStoreConnector]
 
   private lazy val serviceName = "HMRC-TERS-ORG"
 
@@ -64,27 +37,32 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
 
   private lazy val enrolmentsUrl: String = s"/enrolment-store-proxy/enrolment-store/enrolments/$serviceName~$identifierKey~$identifier/users"
 
-  "EnrolmentStoreConnector" - {
+//  override lazy val app: Application = applicationBuilder()
+//    .overrides(bind[EnrolmentStoreConnector].toInstance(enrolmentStoreConnector))
+//    .build()
 
-    "No Content when" - {
+  "EnrolmentStoreConnector" when {
+
+    "No Content when" must {
       "No Content 204" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.NO_CONTENT,
           expectedResponse = None
         )
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe NotClaimed
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe NotClaimed
 
       }
     }
 
-    "Estate not claimed" - {
+    "Estate not claimed" must {
       "empty principalUserIds retrieved" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.OK,
           expectedResponse = Some(
             s"""{
@@ -96,32 +74,32 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
           )
         )
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe NotClaimed
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe NotClaimed
 
       }
     }
 
-    "Internal Server Error" - {
+    "Internal Server Error" must {
       "unexpected status received" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.IM_A_TEAPOT,
           expectedResponse = None
         )
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe ServerError
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe ServerError
 
       }
     }
 
-    "Cannot access estate when" - {
+    "Cannot access estate when" must {
       "non-empty principalUserIds retrieved" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.OK,
           expectedResponse = Some(
             s"""{
@@ -133,17 +111,17 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
                |}""".stripMargin
           ))
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe AlreadyClaimed
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe AlreadyClaimed
 
       }
     }
 
-    "Service Unavailable when" - {
+    "Service Unavailable when" must {
       "Service Unavailable 503" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.SERVICE_UNAVAILABLE,
           expectedResponse = Some(
             """
@@ -153,17 +131,17 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
               |}""".stripMargin
           ))
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe ServiceUnavailable
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe ServiceUnavailable
 
       }
     }
 
-    "Forbidden when" - {
+    "Forbidden when" must {
       "Forbidden 403" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.FORBIDDEN,
           expectedResponse = Some(
             """
@@ -173,17 +151,17 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
               |}""".stripMargin
           ))
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe Forbidden
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe Forbidden
 
       }
     }
 
-    "Invalid service when" - {
+    "Invalid service when" must {
       "Bad Request 400" in {
 
         wiremock(
+          enrolmentsUrl,
           expectedStatus = Status.BAD_REQUEST,
           expectedResponse = Some(
             """
@@ -193,9 +171,8 @@ class EnrolmentStoreConnectorSpec extends AsyncFreeSpec with Matchers with WireM
               |}""".stripMargin
           ))
 
-        connector.checkIfAlreadyClaimed(identifier) map { result =>
-          result mustBe BadRequest
-        }
+        val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
+        result mustBe BadRequest
 
       }
     }

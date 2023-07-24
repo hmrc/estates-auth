@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,30 @@
 package utils
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, urlEqualTo}
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
-
 
 trait WireMockHelper extends BeforeAndAfterAll with BeforeAndAfterEach {
   this: Suite =>
 
   protected val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+
+  def wiremock(url: String, expectedStatus: Int, expectedResponse: Option[String]): StubMapping = {
+
+    val response = expectedResponse map { response =>
+      aResponse()
+        .withStatus(expectedStatus)
+        .withBody(response)
+    } getOrElse {
+      aResponse()
+        .withStatus(expectedStatus)
+    }
+
+    server.stubFor(WireMock.get(urlEqualTo(url)).willReturn(response))
+  }
 
   override def beforeAll(): Unit = {
     server.start()
