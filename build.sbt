@@ -34,7 +34,7 @@ lazy val microservice = Project(appName, file("."))
     scalaVersion := "2.13.11",
     inConfig(Test)(testSettings),
     majorVersion := 0,
-    libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
+    libraryDependencies ++= AppDependencies(),
     PlayKeys.playDefaultPort := 8836,
     scoverageSettings,
     scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s")
