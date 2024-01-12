@@ -65,10 +65,8 @@ trait SpecBase extends PlaySpec
       )
       .overrides(
         bind[AuditConnector].toInstance(mockAuditConnector),
-        bind[EstatesAuthorisedFunctions].toInstance(estatesAuth),
+        bind[EstatesAuthorisedFunctions].toInstance(estatesAuth)
       )
 
   override lazy val app: Application = applicationBuilder().build()
-
-
 }
