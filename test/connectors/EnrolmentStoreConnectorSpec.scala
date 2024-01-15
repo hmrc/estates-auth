@@ -37,10 +37,6 @@ class EnrolmentStoreConnectorSpec extends SpecBase {
 
   private lazy val enrolmentsUrl: String = s"/enrolment-store-proxy/enrolment-store/enrolments/$serviceName~$identifierKey~$identifier/users"
 
-//  override lazy val app: Application = applicationBuilder()
-//    .overrides(bind[EnrolmentStoreConnector].toInstance(enrolmentStoreConnector))
-//    .build()
-
   "EnrolmentStoreConnector" when {
 
     "No Content when" must {
