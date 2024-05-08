@@ -41,6 +41,7 @@ class EstatesAuthControllerSpec extends SpecBase {
   private val agentEnrolment = Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeARN")), "Activated", None)
   private val estatesEnrolment = Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", utr)), "Activated", None)
 
+
   private val enrolments = Enrolments(Set(
     agentEnrolment,
     estatesEnrolment
@@ -374,6 +375,29 @@ class EstatesAuthControllerSpec extends SpecBase {
         }
       }
     }
+
+    "authenticating an individual user" must {
+
+      "redirect to the unauthorised URL" in {
+
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+          .thenReturn(
+            authRetrievals(
+              AffinityGroup.Individual,
+              Enrolments(Set(
+                Enrolment("HMRC-MTD-IT", List(EnrolmentIdentifier("NINO", utr)), "Activated", None)))
+            )
+          )
+
+        val app = applicationBuilder().build()
+        val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
+
+        val result = route(app, request).value
+
+        val response = contentAsJson(result).as[EstateAuthResponse]
+        response mustBe EstateAuthDenied(appConfig.unauthorisedUrl)
+      }
+    }
   }
 
   "passing a non authenticated request" must {
@@ -420,6 +444,7 @@ class EstatesAuthControllerSpec extends SpecBase {
         response mustBe EstateAuthDenied(appConfig.createAgentServicesAccountUrl)
       }
     }
+
     "Agent user has correct enrolled in Agent Services Account" must {
       "allow authentication" in {
         val agentEnrolments = Enrolments(Set(agentEnrolment))
