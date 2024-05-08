@@ -26,7 +26,7 @@ import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.auth.core._
-import uk.gov.hmrc.auth.core.retrieve.{AgentInformation, Retrieval, ~}
+import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -45,16 +45,15 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
 
   private val noEnrollment = Enrolments(Set())
 
-  private val agentInformation = AgentInformation(None, None, None)
-
   private def fakeRequest = FakeRequest("", "")
 
   private def authRetrievals(affinityGroup: AffinityGroup,
-                             enrolment: Enrolments,
-                             agentInformation: AgentInformation): Future[Some[String] ~ Some[AffinityGroup] ~ Enrolments] =
+                             enrolment: Enrolments): Future[Some[String] ~ Some[AffinityGroup] ~ Enrolments] =
     Future.successful(new ~(new ~(Some("id"), Some(affinityGroup)), enrolment))
 
-  private val agentEnrolment = Enrolments(Set(Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeVal")), "Activated", None)))
+  private val agentEnrolment = Enrolments(Set(
+    Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeVal")), "Activated", None)
+  ))
 
   private val bodyParsers = app.injector.instanceOf[BodyParsers.Default]
 
@@ -75,7 +74,7 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
-          .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolment, agentInformation))
+          .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolment))
 
         val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -92,7 +91,7 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
-          .thenReturn(authRetrievals(AffinityGroup.Organisation, agentEnrolment, agentInformation))
+          .thenReturn(authRetrievals(AffinityGroup.Organisation, agentEnrolment))
 
         val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -109,7 +108,7 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
-          .thenReturn(authRetrievals(AffinityGroup.Individual, noEnrollment, agentInformation))
+          .thenReturn(authRetrievals(AffinityGroup.Individual, noEnrollment))
 
         val action = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)

@@ -22,11 +22,6 @@ import play.api.Configuration
 @Singleton
 class AppConfig @Inject()(config: Configuration) {
 
-  val authBaseUrl: String = config.get[Service]("microservice.services.auth").baseUrl
-
-  val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-  val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
-
   lazy val unauthorisedUrl: String = config.get[String]("urls.unauthorised")
   lazy val alreadyClaimedUrl: String = config.get[String]("urls.alreadyClaimed")
   lazy val estateNotClaimedUrl: String = config.get[String]("urls.estateNotClaimed")
