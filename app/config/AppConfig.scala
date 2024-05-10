@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,6 @@ import play.api.Configuration
 
 @Singleton
 class AppConfig @Inject()(config: Configuration) {
-
-  val authBaseUrl: String = config.get[Service]("microservice.services.auth").baseUrl
-
-  val auditingEnabled: Boolean = config.get[Boolean]("auditing.enabled")
-  val graphiteHost: String     = config.get[String]("microservice.metrics.graphite.host")
 
   lazy val unauthorisedUrl: String = config.get[String]("urls.unauthorised")
   lazy val alreadyClaimedUrl: String = config.get[String]("urls.alreadyClaimed")

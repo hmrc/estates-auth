@@ -1,6 +1,19 @@
 import play.sbt.PlayImport.PlayKeys
 
-val appName = "estates-auth"
+
+ThisBuild / scalaVersion := "2.13.13"
+ThisBuild / majorVersion := 0
+
+lazy val microservice = (project in file("."))
+  .enablePlugins(PlayScala, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .settings(
+    name := "estates-auth",
+    libraryDependencies ++= AppDependencies(),
+    PlayKeys.playDefaultPort := 8836,
+    scoverageSettings,
+    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s", "-Wconf:cat=unused-imports&src=routes/.*:s")
+  )
 
 val excludedPackages = Seq(
   "<empty>",
@@ -26,28 +39,5 @@ lazy val scoverageSettings = {
     ScoverageKeys.coverageHighlighting := true
   )
 }
-
-lazy val microservice = Project(appName, file("."))
-  .enablePlugins(PlayScala, SbtDistributablesPlugin)
-  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
-  .settings(
-    scalaVersion := "2.13.12",
-    inConfig(Test)(testSettings),
-    majorVersion := 0,
-    libraryDependencies ++= AppDependencies(),
-    PlayKeys.playDefaultPort := 8836,
-    scoverageSettings,
-    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s")
-  )
-  // To resolve a bug with version 2.x.x of the scoverage plugin - https://github.com/sbt/sbt/issues/6997
-  // Try to remove when sbt[ 1.8.0+ and scoverage is 2.0.7+
-  .settings(libraryDependencySchemes ++= Seq("org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always))
-
-lazy val testSettings: Seq[Def.Setting[?]] = Seq(
-  fork := true,
-  javaOptions ++= Seq(
-    "-Dconfig.resource=test.application.conf"
-  )
-)
 
 addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")

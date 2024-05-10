@@ -1,6 +1,6 @@
 # Estates auth
 
-This service is a fasacde in front of auth and agent-access-control, it is responsible for authenticating users who want to register and maintian an estate.
+This service is a facade in front of auth and agent-access-control, it is responsible for authenticating users who want to register and maintain an estate.
 
 ---
 
@@ -12,7 +12,7 @@ To run tests on this service use the test script:
 
 ---
 
-To run locally using the micro-service provided by the service manager:
+To run locally using the microservice provided by the service manager:
 
 ```
 sm2 --start ESTATES_ALL
