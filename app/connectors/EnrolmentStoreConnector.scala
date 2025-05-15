@@ -32,10 +32,9 @@ class EnrolmentStoreConnector @Inject()(http: HttpClientV2, config: AppConfig) {
     s"${config.enrolmentStoreProxyUrl}/enrolment-store-proxy/enrolment-store/enrolments/HMRC-TERS-ORG~$identifierKey~$identifier/users"
   }
 
-  def checkIfAlreadyClaimed(utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] = {
-    val url = url"${enrolmentsEndpoint(utr)}"
-    http.get(url)
-      .execute[EnrolmentStoreResponse](EnrolmentStoreResponse.httpReads(utr))(ec)
-  }
+  def checkIfAlreadyClaimed(utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] =
+    http.GET[EnrolmentStoreResponse](enrolmentsEndpoint(utr))(EnrolmentStoreResponse.httpReads(utr), hc, ec)
+
+}
 
 }
