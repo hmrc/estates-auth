@@ -1,6 +1,6 @@
 # Estates auth
-
 This service is a facade in front of auth and agent-access-control, it is responsible for authenticating users who want to register and maintain an estate.
+
 
 ---
 

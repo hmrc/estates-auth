@@ -20,18 +20,27 @@ import com.google.inject.Inject
 import config.AppConfig
 import models.EnrolmentStoreResponse
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.StringContextOps
+import uk.gov.hmrc.http.client.HttpClientV2
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EnrolmentStoreConnector @Inject()(http: HttpClient, config: AppConfig) {
+class EnrolmentStoreConnector @Inject()(http: HttpClientV2, config: AppConfig) {
 
   private def enrolmentsEndpoint(identifier: String): String = {
     val identifierKey = "SAUTR"
     s"${config.enrolmentStoreProxyUrl}/enrolment-store-proxy/enrolment-store/enrolments/HMRC-TERS-ORG~$identifierKey~$identifier/users"
   }
 
-  def checkIfAlreadyClaimed(utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] =
-    http.GET[EnrolmentStoreResponse](enrolmentsEndpoint(utr))(EnrolmentStoreResponse.httpReads(utr), hc, ec)
-
+  def checkIfAlreadyClaimed(utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] = {
+    val url = url"${enrolmentsEndpoint(utr)}"
+    http.get(url)
+      .execute(EnrolmentStoreResponse.httpReads(utr), ec)
+  }
 }
+
+
+
+
+
+
