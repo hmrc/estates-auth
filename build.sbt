@@ -11,7 +11,7 @@ lazy val microservice = (project in file("."))
     name := "estates-auth",
     libraryDependencies ++= AppDependencies(),
     PlayKeys.playDefaultPort := 8836,
-    scoverageSettings,
+    CodeCoverageSettings(),
     scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s", "-Wconf:cat=unused-imports&src=routes/.*:s")
   )
 
@@ -29,15 +29,3 @@ val excludedPackages = Seq(
   "views.html.*",
   "testOnly.*"
 )
-
-lazy val scoverageSettings = {
-  import scoverage.ScoverageKeys
-  Seq(
-    ScoverageKeys.coverageExcludedPackages := excludedPackages.mkString(";"),
-    ScoverageKeys.coverageMinimumStmtTotal := 90,
-    ScoverageKeys.coverageFailOnMinimum := true,
-    ScoverageKeys.coverageHighlighting := true
-  )
-}
-
-addCommandAlias("scalastyleAll", "all scalastyle Test/scalastyle")
