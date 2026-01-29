@@ -27,11 +27,10 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AgentAuthorisedForDelegatedEnrolment @Inject()(estatesAuth: EstatesAuthorisedFunctions, config: AppConfig) extends Logging {
+class AgentAuthorisedForDelegatedEnrolment @Inject() (estatesAuth: EstatesAuthorisedFunctions, config: AppConfig)
+    extends Logging {
 
-  def authenticate[A](utr: String)
-                     (implicit hc: HeaderCarrier,
-                      ec: ExecutionContext): Future[EstateAuthResponse] = {
+  def authenticate[A](utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
 
     val predicate = Enrolment("HMRC-TERS-ORG")
       .withIdentifier("SAUTR", utr)
@@ -41,12 +40,15 @@ class AgentAuthorisedForDelegatedEnrolment @Inject()(estatesAuth: EstatesAuthori
       logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] agent is authorised for delegated enrolment for $utr")
       Future.successful(EstateAuthAllowed())
     } recover {
-      case _ : InsufficientEnrolments =>
-        logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] agent is not authorised for delegated enrolment for $utr")
+      case _: InsufficientEnrolments =>
+        logger.info(
+          s"[Session ID: ${Session.id(hc)}][UTR: $utr] agent is not authorised for delegated enrolment for $utr"
+        )
         EstateAuthDenied(config.agentNotAuthorisedUrl)
-      case _ =>
+      case _                         =>
         logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] agent is not authorised for $utr")
         EstateAuthDenied(config.unauthorisedUrl)
     }
   }
+
 }

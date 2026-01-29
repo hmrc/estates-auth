@@ -27,22 +27,24 @@ import uk.gov.hmrc.http.HeaderCarrier
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class EstatesIV @Inject()(estatesAuth: EstatesAuthorisedFunctions, appConfig: AppConfig) extends Logging {
+class EstatesIV @Inject() (estatesAuth: EstatesAuthorisedFunctions, appConfig: AppConfig) extends Logging {
 
-  def authenticate[A](utr: String,
-                      onIVRelationshipExisting: Future[EstateAuthResponse],
-                      onIVRelationshipNotExisting: Future[EstateAuthResponse]
-                     )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
+  def authenticate[A](
+    utr: String,
+    onIVRelationshipExisting: Future[EstateAuthResponse],
+    onIVRelationshipNotExisting: Future[EstateAuthResponse]
+  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
 
     val estateIVRelationship =
       Relationship(appConfig.relationshipName, Set(BusinessKey(appConfig.relationshipIdentifier, utr)))
 
     estatesAuth.authorised(estateIVRelationship) {
       onIVRelationshipExisting
-    } recoverWith {
-      case FailedRelationship(msg) =>
-        logger.info(s"[authenticate][Session ID: ${Session.id(hc)}][UTR: $utr] Relationship does not exist in Estate IV for user due to $msg")
-        onIVRelationshipNotExisting
+    } recoverWith { case FailedRelationship(msg) =>
+      logger.info(
+        s"[authenticate][Session ID: ${Session.id(hc)}][UTR: $utr] Relationship does not exist in Estate IV for user due to $msg"
+      )
+      onIVRelationshipNotExisting
     }
   }
 

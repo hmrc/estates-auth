@@ -34,10 +34,9 @@ trait WireMockHelper extends BeforeAndAfterAll with BeforeAndAfterEach {
       aResponse()
         .withStatus(expectedStatus)
         .withBody(response)
-    } getOrElse {
+    } getOrElse
       aResponse()
         .withStatus(expectedStatus)
-    }
 
     server.stubFor(WireMock.get(urlEqualTo(url)).willReturn(response))
   }
@@ -56,6 +55,5 @@ trait WireMockHelper extends BeforeAndAfterAll with BeforeAndAfterEach {
     super.afterAll()
     server.stop()
   }
+
 }
-
-

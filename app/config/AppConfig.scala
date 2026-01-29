@@ -20,23 +20,24 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 
 @Singleton
-class AppConfig @Inject()(config: Configuration) {
+class AppConfig @Inject() (config: Configuration) {
 
-  lazy val unauthorisedUrl: String = config.get[String]("urls.unauthorised")
-  lazy val alreadyClaimedUrl: String = config.get[String]("urls.alreadyClaimed")
-  lazy val estateNotClaimedUrl: String = config.get[String]("urls.estateNotClaimed")
-  lazy val agentNotAuthorisedUrl: String = config.get[String]("urls.agentNotAuthorised")
+  lazy val unauthorisedUrl: String               = config.get[String]("urls.unauthorised")
+  lazy val alreadyClaimedUrl: String             = config.get[String]("urls.alreadyClaimed")
+  lazy val estateNotClaimedUrl: String           = config.get[String]("urls.estateNotClaimed")
+  lazy val agentNotAuthorisedUrl: String         = config.get[String]("urls.agentNotAuthorised")
   lazy val createAgentServicesAccountUrl: String = config.get[String]("urls.createAgentServicesAccount")
-  lazy val maintainThisEstate: String = config.get[String]("urls.maintainThisEstate")
+  lazy val maintainThisEstate: String            = config.get[String]("urls.maintainThisEstate")
 
   def claimAnEstateUrl(utr: String) =
     s"${config.get[String]("urls.startClaimAnEstate")}/$utr"
 
-  lazy val relationshipName: String =
+  lazy val relationshipName: String       =
     config.get[String]("microservice.services.self.relationship-establishment.name")
+
   lazy val relationshipIdentifier: String =
     config.get[String]("microservice.services.self.relationship-establishment.identifier")
 
-  lazy val enrolmentStoreProxyUrl: String = config.get[Service]("microservice.services.enrolment-store-proxy").baseUrl
+  lazy val enrolmentStoreProxyUrl: String        = config.get[Service]("microservice.services.enrolment-store-proxy").baseUrl
   lazy val primaryEnrolmentCheckEnabled: Boolean = config.get[Boolean]("features.primaryEnrolmentCheck.enabled")
 }

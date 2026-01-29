@@ -37,58 +37,56 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
-                                      enrolmentStoreConnector: EnrolmentStoreConnector,
-                                      appConfig: AppConfig,
-                                      estatesIV: EstatesIV,
-                                      delegatedEnrolment: AgentAuthorisedForDelegatedEnrolment
-                               )(implicit cc: ControllerComponents, ec: ExecutionContext
-) extends BackendController(cc) with I18nSupport with Logging {
+class EstatesAuthController @Inject() (
+  identifierAction: IdentifierAction,
+  enrolmentStoreConnector: EnrolmentStoreConnector,
+  appConfig: AppConfig,
+  estatesIV: EstatesIV,
+  delegatedEnrolment: AgentAuthorisedForDelegatedEnrolment
+)(implicit cc: ControllerComponents, ec: ExecutionContext)
+    extends BackendController(cc) with I18nSupport with Logging {
 
   private def loggingPrefix(implicit fn: FunctionName, hc: HeaderCarrier) = s"[$fn][Session ID: ${Session.id(hc)}]"
 
-  def authorisedForUtr(utr: String): Action[AnyContent] = identifierAction.async {
-    implicit request =>
-      implicit val hc : HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+  def authorisedForUtr(utr: String): Action[AnyContent] = identifierAction.async { implicit request =>
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
-      mapResult(request.user.affinityGroup match {
-        case Agent =>
-          checkIfAgentAuthorised(utr)
-        case Organisation =>
-          checkIfEstateIsClaimedAndEstateIV(utr)
-        case _ =>
-          Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
-      })
+    mapResult(request.user.affinityGroup match {
+      case Agent        =>
+        checkIfAgentAuthorised(utr)
+      case Organisation =>
+        checkIfEstateIsClaimedAndEstateIV(utr)
+      case _            =>
+        Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
+    })
   }
 
-  def agentAuthorised(): Action[AnyContent] = identifierAction.async {
-    implicit request =>
-      mapResult(request.user.affinityGroup match {
-        case Agent =>
-          Future.successful(authoriseAgent(request))
-        case Organisation =>
-          Future.successful(EstateAuthAllowed)
-        case _ =>
-          Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
-      })
+  def agentAuthorised(): Action[AnyContent] = identifierAction.async { implicit request =>
+    mapResult(request.user.affinityGroup match {
+      case Agent        =>
+        Future.successful(authoriseAgent(request))
+      case Organisation =>
+        Future.successful(EstateAuthAllowed)
+      case _            =>
+        Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
+    })
   }
 
   private def mapResult(result: Future[Object]) = result map {
     case EstateAuthInternalServerError => InternalServerError
-    case r: EstateAuthResponse => Ok(Json.toJson(r))
+    case r: EstateAuthResponse         => Ok(Json.toJson(r))
   }
 
-  private def authoriseAgent[A](request: IdentifierRequest[A]): EstateAuthResponse = {
+  private def authoriseAgent[A](request: IdentifierRequest[A]): EstateAuthResponse =
     getAgentReferenceNumber(request.user.enrolments) match {
       case Some(arn) if arn.nonEmpty =>
         EstateAuthAgentAllowed(arn)
-      case _ =>
-        implicit val hc : HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val fn: FunctionName = FunctionName("checkIfEstateIsClaimedAndEstateIV")
+      case _                         =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        implicit val fn: FunctionName  = FunctionName("checkIfEstateIsClaimedAndEstateIV")
         logger.info(s"$loggingPrefix not a valid agent service account")
         EstateAuthDenied(appConfig.createAgentServicesAccountUrl)
     }
-  }
 
   private def getAgentReferenceNumber(enrolments: Enrolments) =
     enrolments.enrolments
@@ -96,11 +94,11 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
       .flatMap(_.identifiers.find(_.key equals "AgentReferenceNumber"))
       .collect { case EnrolmentIdentifier(_, value) => value }
 
-  private def checkIfEstateIsClaimedAndEstateIV[A](utr: String)
-                                                (implicit request: IdentifierRequest[A],
-                                                 hc: HeaderCarrier): Future[EstateAuthResponse] = {
+  private def checkIfEstateIsClaimedAndEstateIV[A](
+    utr: String
+  )(implicit request: IdentifierRequest[A], hc: HeaderCarrier): Future[EstateAuthResponse] = {
 
-    val userEnrolled = checkForEstateEnrolmentForUTR(utr)
+    val userEnrolled              = checkForEstateEnrolmentForUTR(utr)
     implicit val fn: FunctionName = FunctionName("checkIfEstateIsClaimedAndEstateIV")
 
     logger.info(s"$loggingPrefix authenticating user for $utr")
@@ -128,28 +126,27 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
         case NotClaimed =>
           logger.info(s"$loggingPrefix user is not enrolled for $utr and the estate is not claimed")
           Future.successful(EstateAuthDenied(appConfig.claimAnEstateUrl(utr)))
-        case _ =>
+        case _          =>
           logger.info(s"$loggingPrefix unable to determine if $utr is already claimed")
           Future.successful(EstateAuthInternalServerError)
       }
     }
   }
 
-  private def checkIfAgentAuthorised(utr: String)
-                                       (implicit hc: HeaderCarrier): Future[EstateAuthResponse] = {
+  private def checkIfAgentAuthorised(utr: String)(implicit hc: HeaderCarrier): Future[EstateAuthResponse] =
 
     if (appConfig.primaryEnrolmentCheckEnabled) {
       implicit val fn: FunctionName = FunctionName("checkIfAgentAuthorised")
       logger.info(s"$loggingPrefix authenticating agent for $utr")
 
       enrolmentStoreConnector.checkIfAlreadyClaimed(utr) flatMap {
-        case NotClaimed =>
+        case NotClaimed     =>
           logger.info(s"$loggingPrefix agent not authenticated for $utr, estate is not claimed")
           Future.successful(EstateAuthDenied(appConfig.estateNotClaimedUrl))
         case AlreadyClaimed =>
           logger.info(s"$loggingPrefix $utr is claimed, checking if agent is authorised")
           delegatedEnrolment.authenticate(utr)
-        case _ =>
+        case _              =>
           logger.info(s"$loggingPrefix unable to determine if $utr is already claimed")
           Future.successful(EstateAuthInternalServerError)
       }
@@ -157,11 +154,11 @@ class EstatesAuthController @Inject()(identifierAction: IdentifierAction,
       logger.info(s"[checkIfAgentAuthorised][Session ID: ${Session.id(hc)}] $utr checking if agent is authorised")
       delegatedEnrolment.authenticate(utr)
     }
-  }
 
   private def checkForEstateEnrolmentForUTR[A](utr: String)(implicit request: IdentifierRequest[A]): Boolean =
     request.user.enrolments.enrolments
       .find(_.key equals "HMRC-TERS-ORG")
       .flatMap(_.identifiers.find(_.key equals "SAUTR"))
       .exists(_.value equals utr)
+
 }

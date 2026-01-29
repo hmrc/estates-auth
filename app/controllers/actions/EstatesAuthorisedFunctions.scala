@@ -19,4 +19,4 @@ package controllers.actions
 import com.google.inject.Inject
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 
-class EstatesAuthorisedFunctions @Inject()(override val authConnector: AuthConnector) extends AuthorisedFunctions
+class EstatesAuthorisedFunctions @Inject() (override val authConnector: AuthConnector) extends AuthorisedFunctions

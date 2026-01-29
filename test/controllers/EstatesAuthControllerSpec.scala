@@ -38,14 +38,17 @@ class EstatesAuthControllerSpec extends SpecBase {
 
   private val utr = "0987654321"
 
-  private val agentEnrolment = Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeARN")), "Activated", None)
+  private val agentEnrolment   =
+    Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeARN")), "Activated", None)
+
   private val estatesEnrolment = Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", utr)), "Activated", None)
 
-
-  private val enrolments = Enrolments(Set(
-    agentEnrolment,
-    estatesEnrolment
-  ))
+  private val enrolments = Enrolments(
+    Set(
+      agentEnrolment,
+      estatesEnrolment
+    )
+  )
 
   val mockEnrolmentStoreConnector: EnrolmentStoreConnector = mock(classOf[EnrolmentStoreConnector])
 
@@ -58,7 +61,7 @@ class EstatesAuthControllerSpec extends SpecBase {
   private type RetrievalType = Option[String] ~ Option[AffinityGroup] ~ Enrolments
 
   private def authRetrievals(affinityGroup: AffinityGroup, enrolment: Enrolments) =
-    Future.successful(new~(new~(Some("id"), Some(affinityGroup)), enrolment))
+    Future.successful(new ~(new ~(Some("id"), Some(affinityGroup)), enrolment))
 
   "invoking the EstatesAuthController" when {
 
@@ -164,10 +167,12 @@ class EstatesAuthControllerSpec extends SpecBase {
 
         "redirect to agent not authorised when primary enrolment check enabled" in {
 
-          val enrolments = Enrolments(Set(
-            agentEnrolment,
-            Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", "1234567890")), "Activated", None)
-          ))
+          val enrolments = Enrolments(
+            Set(
+              agentEnrolment,
+              Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", "1234567890")), "Activated", None)
+            )
+          )
 
           when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
@@ -180,7 +185,6 @@ class EstatesAuthControllerSpec extends SpecBase {
 
           when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
             .thenReturn(Future.failed(InsufficientEnrolments()))
-
 
           when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
@@ -201,10 +205,12 @@ class EstatesAuthControllerSpec extends SpecBase {
 
         "redirect to agent not authorised when primary enrolment check not enabled" in {
 
-          val enrolments = Enrolments(Set(
-            agentEnrolment,
-            Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", "1234567890")), "Activated", None)
-          ))
+          val enrolments = Enrolments(
+            Set(
+              agentEnrolment,
+              Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", "1234567890")), "Activated", None)
+            )
+          )
 
           when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
@@ -384,12 +390,11 @@ class EstatesAuthControllerSpec extends SpecBase {
           .thenReturn(
             authRetrievals(
               AffinityGroup.Individual,
-              Enrolments(Set(
-                Enrolment("HMRC-MTD-IT", List(EnrolmentIdentifier("NINO", utr)), "Activated", None)))
+              Enrolments(Set(Enrolment("HMRC-MTD-IT", List(EnrolmentIdentifier("NINO", utr)), "Activated", None)))
             )
           )
 
-        val app = applicationBuilder().build()
+        val app     = applicationBuilder().build()
         val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
 
         val result = route(app, request).value
@@ -436,7 +441,7 @@ class EstatesAuthControllerSpec extends SpecBase {
           .thenReturn(authRetrievals(AffinityGroup.Agent, noEnrollment))
 
         val request = FakeRequest(GET, controllers.routes.EstatesAuthController.agentAuthorised().url)
-        val result = route(app, request).value
+        val result  = route(app, request).value
 
         status(result) mustBe OK
 
@@ -458,7 +463,7 @@ class EstatesAuthControllerSpec extends SpecBase {
           .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolments))
 
         val request = FakeRequest(GET, controllers.routes.EstatesAuthController.agentAuthorised().url)
-        val result = route(app, request).value
+        val result  = route(app, request).value
 
         status(result) mustBe OK
 
@@ -467,4 +472,5 @@ class EstatesAuthControllerSpec extends SpecBase {
       }
     }
   }
+
 }

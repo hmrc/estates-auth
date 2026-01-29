@@ -31,11 +31,12 @@ class EnrolmentStoreConnectorSpec extends SpecBase {
   private lazy val serviceName = "HMRC-TERS-ORG"
 
   private val identifierKey = "SAUTR"
-  private val identifier = "0987654321"
+  private val identifier    = "0987654321"
 
   private val principalId = Seq("ABCEDEFGI1234567")
 
-  private lazy val enrolmentsUrl: String = s"/enrolment-store-proxy/enrolment-store/enrolments/$serviceName~$identifierKey~$identifier/users"
+  private lazy val enrolmentsUrl: String =
+    s"/enrolment-store-proxy/enrolment-store/enrolments/$serviceName~$identifierKey~$identifier/users"
 
   "EnrolmentStoreConnector" when {
 
@@ -105,7 +106,8 @@ class EnrolmentStoreConnectorSpec extends SpecBase {
                |    "delegatedUserIds": [
                |    ]
                |}""".stripMargin
-          ))
+          )
+        )
 
         val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
         result mustBe AlreadyClaimed
@@ -125,7 +127,8 @@ class EnrolmentStoreConnectorSpec extends SpecBase {
               |   "errorCode": "SERVICE_UNAVAILABLE",
               |   "message": "Service temporarily unavailable"
               |}""".stripMargin
-          ))
+          )
+        )
 
         val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
         result mustBe ServiceUnavailable
@@ -145,7 +148,8 @@ class EnrolmentStoreConnectorSpec extends SpecBase {
               |   "errorCode": "CREDENTIAL_CANNOT_PERFORM_ADMIN_ACTION",
               |   "message": "The User credentials are valid but the user does not have permission to perform the requested function"
               |}""".stripMargin
-          ))
+          )
+        )
 
         val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
         result mustBe Forbidden
@@ -165,7 +169,8 @@ class EnrolmentStoreConnectorSpec extends SpecBase {
               |   "errorCode": "INVALID_SERVICE",
               |   "message": "The provided service does not exist"
               |}""".stripMargin
-          ))
+          )
+        )
 
         val result = Await.result(enrolmentStoreConnector.checkIfAlreadyClaimed(identifier), Duration.Inf)
         result mustBe BadRequest
