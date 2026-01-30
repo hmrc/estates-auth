@@ -32,7 +32,7 @@ class AppConfig @Inject() (config: Configuration) {
   def claimAnEstateUrl(utr: String) =
     s"${config.get[String]("urls.startClaimAnEstate")}/$utr"
 
-  lazy val relationshipName: String       =
+  lazy val relationshipName: String =
     config.get[String]("microservice.services.self.relationship-establishment.name")
 
   lazy val relationshipIdentifier: String =

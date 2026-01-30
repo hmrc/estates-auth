@@ -38,7 +38,7 @@ class EstatesAuthControllerSpec extends SpecBase {
 
   private val utr = "0987654321"
 
-  private val agentEnrolment   =
+  private val agentEnrolment =
     Enrolment("HMRC-AS-AGENT", List(EnrolmentIdentifier("AgentReferenceNumber", "SomeARN")), "Activated", None)
 
   private val estatesEnrolment = Enrolment("HMRC-TERS-ORG", List(EnrolmentIdentifier("SAUTR", utr)), "Activated", None)
