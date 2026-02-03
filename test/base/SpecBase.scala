@@ -36,20 +36,21 @@ import utils.WireMockHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait SpecBase extends PlaySpec
-  with Matchers
-  with GuiceOneAppPerSuite
-  with ScalaFutures
-  with EitherValues
-  with RecoverMethods
-  with OptionValues
-  with WireMockHelper {
+trait SpecBase
+    extends PlaySpec
+    with Matchers
+    with GuiceOneAppPerSuite
+    with ScalaFutures
+    with EitherValues
+    with RecoverMethods
+    with OptionValues
+    with WireMockHelper {
 
   implicit val hc: HeaderCarrier = HeaderCarrier()
 
   val mockAuditConnector: AuditConnector = mock(classOf[AuditConnector])
-  val mockAuthConnector: AuthConnector = mock(classOf[AuthConnector])
-  val estatesAuth = new EstatesAuthorisedFunctions(mockAuthConnector)
+  val mockAuthConnector: AuthConnector   = mock(classOf[AuthConnector])
+  val estatesAuth                        = new EstatesAuthorisedFunctions(mockAuthConnector)
 
   when(mockAuditConnector.sendEvent(any[DataEvent])(any[HeaderCarrier], any[ExecutionContext]))
     .thenReturn(Future.successful(Success))
@@ -57,10 +58,10 @@ trait SpecBase extends PlaySpec
   def applicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
       .configure(
-        "metrics.enabled" -> false,
-        "auditing.enabled" -> true,
-        "microservice.metrics.graphite.enabled" -> false,
-        "features.primaryEnrolmentCheck.enabled" -> false,
+        "metrics.enabled"                                  -> false,
+        "auditing.enabled"                                 -> true,
+        "microservice.metrics.graphite.enabled"            -> false,
+        "features.primaryEnrolmentCheck.enabled"           -> false,
         "microservice.services.enrolment-store-proxy.port" -> server.port()
       )
       .overrides(

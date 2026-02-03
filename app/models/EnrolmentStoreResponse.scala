@@ -44,33 +44,36 @@ object EnrolmentStoreResponse extends Logging {
 
   def httpReads(utr: String)(implicit hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
     (_: String, _: String, response: HttpResponse) => {
-      logger.debug(s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}")
+      logger.debug(
+        s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}"
+      )
 
       response.status match {
-        case OK =>
+        case OK                  =>
           response.json.as[EnrolmentStore] match {
             case EnrolmentStore(Seq(), _) =>
               logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has not been claimed")
               NotClaimed
-            case _ =>
+            case _                        =>
               logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has already been claimed")
               AlreadyClaimed
           }
-        case NO_CONTENT =>
+        case NO_CONTENT          =>
           logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR is not claimed or delegated")
           NotClaimed
         case SERVICE_UNAVAILABLE =>
           logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received ServiceUnavailable response")
           ServiceUnavailable
-        case FORBIDDEN =>
+        case FORBIDDEN           =>
           logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received Forbidden response")
           Forbidden
-        case BAD_REQUEST =>
+        case BAD_REQUEST         =>
           logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] received BadRequest response")
           BadRequest
-        case _ =>
+        case _                   =>
           logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] unexpected response from EnrolmentStore")
           ServerError
       }
     }
+
 }

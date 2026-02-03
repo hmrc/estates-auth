@@ -32,13 +32,14 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AuthenticatedIdentifierAction])
-trait IdentifierAction extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]
+trait IdentifierAction
+    extends ActionBuilder[IdentifierRequest, AnyContent] with ActionFunction[Request, IdentifierRequest]
 
-class AuthenticatedIdentifierAction @Inject()(
-                                               estatesAuthFunctions: EstatesAuthorisedFunctions,
-                                               val parser: BodyParsers.Default
-                                             )
-                                             (implicit val executionContext: ExecutionContext) extends IdentifierAction with Logging {
+class AuthenticatedIdentifierAction @Inject() (
+  estatesAuthFunctions: EstatesAuthorisedFunctions,
+  val parser: BodyParsers.Default
+)(implicit val executionContext: ExecutionContext)
+    extends IdentifierAction with Logging {
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
@@ -49,22 +50,22 @@ class AuthenticatedIdentifierAction @Inject()(
       Retrievals.allEnrolments
 
     estatesAuthFunctions.authorised().retrieve(retrievals) {
-      case Some(internalId) ~ Some(Agent) ~ enrolments =>
+      case Some(internalId) ~ Some(Agent) ~ enrolments        =>
         logger.info(s"[Session ID: ${Session.id(hc)}] successfully identified as an Agent")
         block(IdentifierRequest(request, AgentUser(internalId, enrolments)))
       case Some(internalId) ~ Some(Organisation) ~ enrolments =>
         logger.info(s"[Session ID: ${Session.id(hc)}] successfully identified as Organisation")
         block(IdentifierRequest(request, OrganisationUser(internalId, enrolments)))
-      case Some(internalId) ~ Some(Individual) ~ enrolments =>
+      case Some(internalId) ~ Some(Individual) ~ enrolments   =>
         logger.info(s"[Session ID: ${Session.id(hc)}] Unauthorised due to affinityGroup being Individual")
         block(IdentifierRequest(request, IndividualUser(internalId, enrolments)))
-      case _ =>
+      case _                                                  =>
         logger.warn(s"[Session ID: ${Session.id(hc)}] Unable to retrieve internal id")
         throw new UnauthorizedException("Unable to retrieve internal Id")
-    } recover {
-      case e =>
-        logger.warn(s"[Session ID: ${Session.id(hc)}] Unable to retrieve internal id due to exception ${e.getMessage}")
-        Status(UNAUTHORIZED)
+    } recover { case e =>
+      logger.warn(s"[Session ID: ${Session.id(hc)}] Unable to retrieve internal id due to exception ${e.getMessage}")
+      Status(UNAUTHORIZED)
     }
   }
+
 }
