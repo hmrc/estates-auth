@@ -18,9 +18,10 @@ package config
 
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
+import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject() (config: Configuration) {
+class AppConfig @Inject() (config: Configuration, servicesConfig: ServicesConfig) {
 
   lazy val unauthorisedUrl: String               = config.get[String]("urls.unauthorised")
   lazy val alreadyClaimedUrl: String             = config.get[String]("urls.alreadyClaimed")
@@ -38,6 +39,6 @@ class AppConfig @Inject() (config: Configuration) {
   lazy val relationshipIdentifier: String =
     config.get[String]("microservice.services.self.relationship-establishment.identifier")
 
-  lazy val enrolmentStoreProxyUrl: String        = config.get[Service]("microservice.services.enrolment-store-proxy").baseUrl
+  lazy val enrolmentStoreProxyUrl: String        = servicesConfig.baseUrl("enrolment-store-proxy")
   lazy val primaryEnrolmentCheckEnabled: Boolean = config.get[Boolean]("features.primaryEnrolmentCheck.enabled")
 }
