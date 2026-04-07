@@ -1,6 +1,6 @@
 import play.sbt.PlayImport.PlayKeys
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.18"
 ThisBuild / majorVersion := 0
 
 lazy val microservice = (project in file("."))
@@ -13,20 +13,5 @@ lazy val microservice = (project in file("."))
     CodeCoverageSettings(),
     scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s", "-Wconf:cat=unused-imports&src=routes/.*:s")
   )
-
-val excludedPackages = Seq(
-  "<empty>",
-  ".*Reverse.*",
-  ".*Routes.*",
-  ".*standardError*.*",
-  ".*main_template*.*",
-  "uk.gov.hmrc.BuildInfo",
-  "app.*",
-  "prod.*",
-  "config.*",
-  "testOnlyDoNotUseInAppConf.*",
-  "views.html.*",
-  "testOnly.*"
-)
 
 addCommandAlias("scalafmtAll", "all scalafmtSbt scalafmt Test/scalafmt")
