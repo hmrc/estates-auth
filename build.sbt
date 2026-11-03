@@ -1,7 +1,9 @@
 import play.sbt.PlayImport.PlayKeys
+import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 
-ThisBuild / scalaVersion := "2.13.18"
-ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "3.9.0"
+ThisBuild / targetJvm := "jvm-21"
+ThisBuild / majorVersion := 1
 
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)

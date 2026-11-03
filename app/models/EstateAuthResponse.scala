@@ -22,15 +22,24 @@ sealed trait EstateAuthResponse
 
 object EstateAuthResponse {
 
-  implicit val reads: Reads[EstateAuthResponse] =
-    __.read[EstateAuthAllowed].widen[EstateAuthResponse] orElse
-      __.read[EstateAuthAgentAllowed].widen[EstateAuthResponse] orElse
-      __.read[EstateAuthDenied].widen[EstateAuthResponse]
+  given reads: Reads[EstateAuthResponse] = (__ \ "arn")
+    .read[String]
+    .map[EstateAuthResponse](EstateAuthAgentAllowed.apply)
+    .orElse(
+      (__ \ "redirectUrl")
+        .read[String]
+        .map[EstateAuthResponse](EstateAuthDenied.apply)
+    )
+    .orElse(
+      (__ \ "authorised")
+        .read[Boolean]
+        .map[EstateAuthResponse](EstateAuthAllowed.apply)
+    )
 
-  implicit val writes: Writes[EstateAuthResponse] = Writes {
-    case r: EstateAuthAllowed          => Json.toJson(r)(EstateAuthAllowed.format)
-    case r: EstateAuthAgentAllowed     => Json.toJson(r)(EstateAuthAgentAllowed.format)
-    case r: EstateAuthDenied           => Json.toJson(r)(EstateAuthDenied.format)
+  given writes: Writes[EstateAuthResponse] = Writes {
+    case r: EstateAuthAllowed          => Json.toJson(r)(using EstateAuthAllowed.format)
+    case r: EstateAuthAgentAllowed     => Json.toJson(r)(using EstateAuthAgentAllowed.format)
+    case r: EstateAuthDenied           => Json.toJson(r)(using EstateAuthDenied.format)
     case EstateAuthInternalServerError =>
       throw new RuntimeException("Can't write EstateAuthInternalServerError as Json")
   }
@@ -40,19 +49,19 @@ object EstateAuthResponse {
 case class EstateAuthAllowed(authorised: Boolean = true) extends EstateAuthResponse
 
 case object EstateAuthAllowed {
-  implicit val format: Format[EstateAuthAllowed] = Json.format[EstateAuthAllowed]
+  given format: Format[EstateAuthAllowed] = Json.format[EstateAuthAllowed]
 }
 
 case class EstateAuthAgentAllowed(arn: String) extends EstateAuthResponse
 
 case object EstateAuthAgentAllowed {
-  implicit val format: Format[EstateAuthAgentAllowed] = Json.format[EstateAuthAgentAllowed]
+  given format: Format[EstateAuthAgentAllowed] = Json.format[EstateAuthAgentAllowed]
 }
 
 case class EstateAuthDenied(redirectUrl: String) extends EstateAuthResponse
 
 case object EstateAuthDenied {
-  implicit val format: Format[EstateAuthDenied] = Json.format[EstateAuthDenied]
+  given format: Format[EstateAuthDenied] = Json.format[EstateAuthDenied]
 }
 
 case object EstateAuthInternalServerError extends EstateAuthResponse

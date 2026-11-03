@@ -90,8 +90,8 @@ class EstatesAuthController @Inject() (
 
   private def getAgentReferenceNumber(enrolments: Enrolments) =
     enrolments.enrolments
-      .find(_.key equals "HMRC-AS-AGENT")
-      .flatMap(_.identifiers.find(_.key equals "AgentReferenceNumber"))
+      .find(_.key `equals` "HMRC-AS-AGENT")
+      .flatMap(_.identifiers.find(_.key `equals` "AgentReferenceNumber"))
       .collect { case EnrolmentIdentifier(_, value) => value }
 
   private def checkIfEstateIsClaimedAndEstateIV[A](
@@ -157,8 +157,8 @@ class EstatesAuthController @Inject() (
 
   private def checkForEstateEnrolmentForUTR[A](utr: String)(implicit request: IdentifierRequest[A]): Boolean =
     request.user.enrolments.enrolments
-      .find(_.key equals "HMRC-TERS-ORG")
-      .flatMap(_.identifiers.find(_.key equals "SAUTR"))
-      .exists(_.value equals utr)
+      .find(_.key `equals` "HMRC-TERS-ORG")
+      .flatMap(_.identifiers.find(_.key `equals` "SAUTR"))
+      .exists(_.value `equals` utr)
 
 }

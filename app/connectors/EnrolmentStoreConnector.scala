@@ -38,7 +38,7 @@ class EnrolmentStoreConnector @Inject() (http: HttpClientV2, config: AppConfig) 
     val url = url"${enrolmentsEndpoint(utr)}"
     http
       .get(url)
-      .execute(EnrolmentStoreResponse.httpReads(utr), ec)
+      .execute(using EnrolmentStoreResponse.httpReads(utr), ec)
   }
 
 }

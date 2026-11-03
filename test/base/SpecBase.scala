@@ -52,7 +52,7 @@ trait SpecBase
   val mockAuthConnector: AuthConnector   = mock(classOf[AuthConnector])
   val estatesAuth                        = new EstatesAuthorisedFunctions(mockAuthConnector)
 
-  when(mockAuditConnector.sendEvent(any[DataEvent])(any[HeaderCarrier], any[ExecutionContext]))
+  when(mockAuditConnector.sendEvent(any[DataEvent])(using any[HeaderCarrier], any[ExecutionContext]))
     .thenReturn(Future.successful(Success))
 
   def applicationBuilder(): GuiceApplicationBuilder =
