@@ -124,6 +124,24 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
       }
     }
 
+    "the auth retrieval is incomplete" must {
+      "return unauthorised" in {
+
+        val application = applicationBuilder().build()
+
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
+          .thenReturn(Future.successful(new ~(new ~(None, None), noEnrollment)))
+
+        val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
+        val controller = new Harness(action)
+        val result     = controller.onPageLoad()(fakeRequest)
+
+        status(result) mustBe UNAUTHORIZED
+
+        application.stop()
+      }
+    }
+
     "the user hasn't logged in" must {
       "redirect the user to log in " in {
 

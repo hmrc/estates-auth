@@ -51,10 +51,10 @@ object EnrolmentStoreResponse extends Logging {
       response.status match {
         case OK                  =>
           response.json.as[EnrolmentStore] match {
-            case EnrolmentStore(Seq(), _) =>
+            case EnrolmentStore(Seq(), Seq()) =>
               logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has not been claimed")
               NotClaimed
-            case _                        =>
+            case _                            =>
               logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has already been claimed")
               AlreadyClaimed
           }

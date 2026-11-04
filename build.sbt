@@ -13,7 +13,7 @@ lazy val microservice = (project in file("."))
     libraryDependencies ++= AppDependencies(),
     PlayKeys.playDefaultPort := 8836,
     CodeCoverageSettings(),
-    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s", "-Wconf:cat=unused-imports&src=routes/.*:s")
+    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s")
   )
 
 addCommandAlias("scalafmtAll", "all scalafmtSbt scalafmt Test/scalafmt")

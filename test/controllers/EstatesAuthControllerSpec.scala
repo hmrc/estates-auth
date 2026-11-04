@@ -67,6 +67,28 @@ class EstatesAuthControllerSpec extends SpecBase {
 
     "authenticating an agent" when {
 
+      "estate is claimed but enrolment query fails" must {
+
+        "return internal server error when primary enrolment check enabled" in {
+
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
+            .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
+
+          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
+            .thenReturn(Future.successful(ServerError))
+
+          val app = applicationBuilder()
+            .configure("features.primaryEnrolmentCheck.enabled" -> true)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+            .build()
+
+          val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
+
+          val result = route(app, request).value
+          status(result) mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+
       "estate is claimed and agent is authorised" must {
 
         "return OK" in {
@@ -427,6 +449,28 @@ class EstatesAuthControllerSpec extends SpecBase {
   }
 
   "invoking authenticate" when {
+
+    "a non-agent user calls the agent auth endpoint" must {
+
+      "redirect the user to the unauthorised URL" in {
+
+        val app = applicationBuilder()
+          .configure("features.primaryEnrolmentCheck.enabled" -> false)
+          .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+          .build()
+
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
+          .thenReturn(authRetrievals(AffinityGroup.Individual, Enrolments(Set())))
+
+        val request = FakeRequest(GET, controllers.routes.EstatesAuthController.agentAuthorised().url)
+        val result  = route(app, request).value
+
+        status(result) mustBe OK
+
+        val response = contentAsJson(result).as[EstateAuthResponse]
+        response mustBe EstateAuthDenied(appConfig.unauthorisedUrl)
+      }
+    }
 
     "an Agent user hasn't enrolled an Agent Services Account" must {
 
