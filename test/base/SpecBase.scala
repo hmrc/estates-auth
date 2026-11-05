@@ -46,7 +46,7 @@ trait SpecBase
     with OptionValues
     with WireMockHelper {
 
-  implicit val hc: HeaderCarrier = HeaderCarrier()
+  given hc: HeaderCarrier = HeaderCarrier()
 
   val mockAuditConnector: AuditConnector = mock(classOf[AuditConnector])
   val mockAuthConnector: AuthConnector   = mock(classOf[AuthConnector])

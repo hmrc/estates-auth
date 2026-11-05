@@ -30,7 +30,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class AgentAuthorisedForDelegatedEnrolment @Inject() (estatesAuth: EstatesAuthorisedFunctions, config: AppConfig)
     extends Logging {
 
-  def authenticate[A](utr: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
+  def authenticate[A](utr: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
 
     val predicate = Enrolment("HMRC-TERS-ORG")
       .withIdentifier("SAUTR", utr)

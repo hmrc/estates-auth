@@ -38,12 +38,12 @@ trait IdentifierAction
 class AuthenticatedIdentifierAction @Inject() (
   estatesAuthFunctions: EstatesAuthorisedFunctions,
   val parser: BodyParsers.Default
-)(implicit val executionContext: ExecutionContext)
+)(using val executionContext: ExecutionContext)
     extends IdentifierAction with Logging {
 
   override def invokeBlock[A](request: Request[A], block: IdentifierRequest[A] => Future[Result]): Future[Result] = {
 
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     val retrievals = Retrievals.internalId and
       Retrievals.affinityGroup and

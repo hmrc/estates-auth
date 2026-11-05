@@ -24,8 +24,6 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 
 class EnrolmentStoreResponseSpec extends SpecBase {
 
-  implicit override val hc: HeaderCarrier = HeaderCarrier()
-
   private def readResponse(status: Int, body: String = ""): EnrolmentStoreResponse = {
     val reads = EnrolmentStoreResponse.httpReads("0987654321")(using hc)
     reads.read("GET", "/test", HttpResponse(status, body))

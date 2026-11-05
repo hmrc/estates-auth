@@ -34,7 +34,7 @@ class EnrolmentStoreConnector @Inject() (http: HttpClientV2, config: AppConfig) 
 
   def checkIfAlreadyClaimed(
     utr: String
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] = {
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[EnrolmentStoreResponse] = {
     val url = url"${enrolmentsEndpoint(utr)}"
     http
       .get(url)

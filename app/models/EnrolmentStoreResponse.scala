@@ -26,7 +26,7 @@ sealed trait EnrolmentStoreResponse
 
 object EnrolmentStoreResponse extends Logging {
 
-  implicit val format: Format[EnrolmentStore] = Json.format[EnrolmentStore]
+  given format: Format[EnrolmentStore] = Json.format[EnrolmentStore]
 
   case class EnrolmentStore(principalUserIds: Seq[String], delegatedUserIds: Seq[String]) extends EnrolmentStoreResponse
 
@@ -42,7 +42,7 @@ object EnrolmentStoreResponse extends Logging {
 
   case object AlreadyClaimed extends EnrolmentStoreResponse
 
-  def httpReads(utr: String)(implicit hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
+  def httpReads(utr: String)(using hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
     (_: String, _: String, response: HttpResponse) => {
       logger.debug(
         s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}"
