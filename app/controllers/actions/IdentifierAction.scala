@@ -19,12 +19,12 @@ package controllers.actions
 import com.google.inject.{ImplementedBy, Inject}
 import play.api.Logging
 import play.api.http.Status.UNAUTHORIZED
-import play.api.mvc.Results._
-import play.api.mvc._
+import play.api.mvc.Results.*
+import play.api.mvc.*
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Individual, Organisation}
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals
 import uk.gov.hmrc.auth.core.retrieve.~
-import models._
+import models.*
 import utils.Session
 import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter

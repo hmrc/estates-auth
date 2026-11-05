@@ -17,8 +17,8 @@
 package models
 
 import play.api.Logging
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
 import utils.Session
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 

@@ -20,14 +20,14 @@ import com.google.inject.{Inject, Singleton}
 import play.api.Logging
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.{EnrolmentIdentifier, Enrolments}
 import config.AppConfig
 import connectors.EnrolmentStoreConnector
 import controllers.actions.IdentifierAction
-import models._
-import models.EnrolmentStoreResponse._
+import models.*
+import models.EnrolmentStoreResponse.*
 import services.{AgentAuthorisedForDelegatedEnrolment, EstatesIV}
 import utils.{FunctionName, Session}
 import uk.gov.hmrc.http.HeaderCarrier

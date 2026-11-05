@@ -17,7 +17,7 @@
 package connectors
 
 import base.SpecBase
-import models.EnrolmentStoreResponse._
+import models.EnrolmentStoreResponse.*
 import play.api.http.Status
 
 import scala.concurrent.Await

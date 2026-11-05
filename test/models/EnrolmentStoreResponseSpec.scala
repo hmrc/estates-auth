@@ -17,7 +17,7 @@
 package models
 
 import base.SpecBase
-import models.EnrolmentStoreResponse._
+import models.EnrolmentStoreResponse.*
 import play.api.http.Status
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}

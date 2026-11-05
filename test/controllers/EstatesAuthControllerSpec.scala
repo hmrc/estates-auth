@@ -19,15 +19,15 @@ package controllers
 import base.SpecBase
 import config.AppConfig
 import connectors.EnrolmentStoreConnector
-import models.EnrolmentStoreResponse._
-import models._
+import models.EnrolmentStoreResponse.*
+import models.*
 import org.mockito.ArgumentMatchers.{any, eq => mEq}
 import org.mockito.Mockito.{mock, when}
 import play.api.Application
 import play.api.inject.bind
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 
