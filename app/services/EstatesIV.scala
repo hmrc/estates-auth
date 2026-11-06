@@ -33,7 +33,7 @@ class EstatesIV @Inject() (estatesAuth: EstatesAuthorisedFunctions, appConfig: A
     utr: String,
     onIVRelationshipExisting: Future[EstateAuthResponse],
     onIVRelationshipNotExisting: Future[EstateAuthResponse]
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[EstateAuthResponse] = {
 
     val estateIVRelationship =
       Relationship(appConfig.relationshipName, Set(BusinessKey(appConfig.relationshipIdentifier, utr)))

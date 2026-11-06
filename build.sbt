@@ -1,7 +1,9 @@
 import play.sbt.PlayImport.PlayKeys
+import uk.gov.hmrc.DefaultBuildSettings.targetJvm
 
-ThisBuild / scalaVersion := "2.13.18"
-ThisBuild / majorVersion := 0
+ThisBuild / scalaVersion := "3.9.0"
+ThisBuild / targetJvm := "jvm-21"
+ThisBuild / majorVersion := 1
 
 lazy val microservice = (project in file("."))
   .enablePlugins(PlayScala, SbtDistributablesPlugin)
@@ -11,7 +13,7 @@ lazy val microservice = (project in file("."))
     libraryDependencies ++= AppDependencies(),
     PlayKeys.playDefaultPort := 8836,
     CodeCoverageSettings(),
-    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s", "-Wconf:cat=unused-imports&src=routes/.*:s")
+    scalacOptions ++= Seq("-feature", "-Wconf:src=routes/.*:s")
   )
 
 addCommandAlias("scalafmtAll", "all scalafmtSbt scalafmt Test/scalafmt")

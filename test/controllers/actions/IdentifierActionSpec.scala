@@ -17,15 +17,15 @@
 package controllers.actions
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito._
+import org.mockito.Mockito.*
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Action, AnyContent, BodyParsers, Results}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, ~}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -77,7 +77,7 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
 
         val application = applicationBuilder().build()
 
-        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolment))
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
@@ -94,7 +94,7 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
 
         val application = applicationBuilder().build()
 
-        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Organisation, agentEnrolment))
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
@@ -111,7 +111,7 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
 
         val application = applicationBuilder().build()
 
-        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Individual, noEnrollment))
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
@@ -124,14 +124,32 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
       }
     }
 
+    "the auth retrieval is incomplete" must {
+      "return unauthorised" in {
+
+        val application = applicationBuilder().build()
+
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
+          .thenReturn(Future.successful(new ~(new ~(None, None), noEnrollment)))
+
+        val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
+        val controller = new Harness(action)
+        val result     = controller.onPageLoad()(fakeRequest)
+
+        status(result) mustBe UNAUTHORIZED
+
+        application.stop()
+      }
+    }
+
     "the user hasn't logged in" must {
       "redirect the user to log in " in {
 
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed MissingBearerToken())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed MissingBearerToken())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -149,8 +167,8 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed BearerTokenExpired())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed BearerTokenExpired())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -168,8 +186,8 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed InsufficientEnrolments())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed InsufficientEnrolments())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -187,8 +205,8 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed InsufficientConfidenceLevel())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed InsufficientConfidenceLevel())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -206,8 +224,8 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed UnsupportedAuthProvider())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed UnsupportedAuthProvider())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -225,8 +243,8 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed UnsupportedAffinityGroup())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed UnsupportedAffinityGroup())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)
@@ -244,8 +262,8 @@ class IdentifierActionSpec extends PlaySpec with GuiceOneAppPerSuite {
         val application = applicationBuilder().build()
 
         when(
-          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any())
-        ) thenReturn (Future failed UnsupportedCredentialRole())
+          mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any())
+        ) `thenReturn` (Future failed UnsupportedCredentialRole())
 
         val action     = new AuthenticatedIdentifierAction(estatesAuth, bodyParsers)
         val controller = new Harness(action)

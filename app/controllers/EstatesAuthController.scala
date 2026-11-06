@@ -20,14 +20,14 @@ import com.google.inject.{Inject, Singleton}
 import play.api.Logging
 import play.api.i18n.I18nSupport
 import play.api.libs.json.Json
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.auth.core.AffinityGroup.{Agent, Organisation}
 import uk.gov.hmrc.auth.core.{EnrolmentIdentifier, Enrolments}
 import config.AppConfig
 import connectors.EnrolmentStoreConnector
 import controllers.actions.IdentifierAction
-import models._
-import models.EnrolmentStoreResponse._
+import models.*
+import models.EnrolmentStoreResponse.*
 import services.{AgentAuthorisedForDelegatedEnrolment, EstatesIV}
 import utils.{FunctionName, Session}
 import uk.gov.hmrc.http.HeaderCarrier
@@ -43,25 +43,25 @@ class EstatesAuthController @Inject() (
   appConfig: AppConfig,
   estatesIV: EstatesIV,
   delegatedEnrolment: AgentAuthorisedForDelegatedEnrolment
-)(implicit cc: ControllerComponents, ec: ExecutionContext)
+)(using cc: ControllerComponents, ec: ExecutionContext)
     extends BackendController(cc) with I18nSupport with Logging {
 
-  private def loggingPrefix(implicit fn: FunctionName, hc: HeaderCarrier) = s"[$fn][Session ID: ${Session.id(hc)}]"
+  private def loggingPrefix(using fn: FunctionName, hc: HeaderCarrier) = s"[$fn][Session ID: ${Session.id(hc)}]"
 
-  def authorisedForUtr(utr: String): Action[AnyContent] = identifierAction.async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+  def authorisedForUtr(utr: String): Action[AnyContent] = identifierAction.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     mapResult(request.user.affinityGroup match {
       case Agent        =>
         checkIfAgentAuthorised(utr)
       case Organisation =>
-        checkIfEstateIsClaimedAndEstateIV(utr)
+        checkIfEstateIsClaimedAndEstateIV(utr)(using request, summon[HeaderCarrier])
       case _            =>
         Future.successful(EstateAuthDenied(appConfig.unauthorisedUrl))
     })
   }
 
-  def agentAuthorised(): Action[AnyContent] = identifierAction.async { implicit request =>
+  def agentAuthorised(): Action[AnyContent] = identifierAction.async { request =>
     mapResult(request.user.affinityGroup match {
       case Agent        =>
         Future.successful(authoriseAgent(request))
@@ -82,24 +82,24 @@ class EstatesAuthController @Inject() (
       case Some(arn) if arn.nonEmpty =>
         EstateAuthAgentAllowed(arn)
       case _                         =>
-        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-        implicit val fn: FunctionName  = FunctionName("checkIfEstateIsClaimedAndEstateIV")
+        given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        given FunctionName  = FunctionName("checkIfEstateIsClaimedAndEstateIV")
         logger.info(s"$loggingPrefix not a valid agent service account")
         EstateAuthDenied(appConfig.createAgentServicesAccountUrl)
     }
 
   private def getAgentReferenceNumber(enrolments: Enrolments) =
     enrolments.enrolments
-      .find(_.key equals "HMRC-AS-AGENT")
-      .flatMap(_.identifiers.find(_.key equals "AgentReferenceNumber"))
+      .find(_.key `equals` "HMRC-AS-AGENT")
+      .flatMap(_.identifiers.find(_.key `equals` "AgentReferenceNumber"))
       .collect { case EnrolmentIdentifier(_, value) => value }
 
   private def checkIfEstateIsClaimedAndEstateIV[A](
     utr: String
-  )(implicit request: IdentifierRequest[A], hc: HeaderCarrier): Future[EstateAuthResponse] = {
+  )(using request: IdentifierRequest[A], hc: HeaderCarrier): Future[EstateAuthResponse] = {
 
-    val userEnrolled              = checkForEstateEnrolmentForUTR(utr)
-    implicit val fn: FunctionName = FunctionName("checkIfEstateIsClaimedAndEstateIV")
+    val userEnrolled   = checkForEstateEnrolmentForUTR(utr)
+    given FunctionName = FunctionName("checkIfEstateIsClaimedAndEstateIV")
 
     logger.info(s"$loggingPrefix authenticating user for $utr")
 
@@ -133,10 +133,10 @@ class EstatesAuthController @Inject() (
     }
   }
 
-  private def checkIfAgentAuthorised(utr: String)(implicit hc: HeaderCarrier): Future[EstateAuthResponse] =
+  private def checkIfAgentAuthorised(utr: String)(using hc: HeaderCarrier): Future[EstateAuthResponse] =
 
     if (appConfig.primaryEnrolmentCheckEnabled) {
-      implicit val fn: FunctionName = FunctionName("checkIfAgentAuthorised")
+      given FunctionName = FunctionName("checkIfAgentAuthorised")
       logger.info(s"$loggingPrefix authenticating agent for $utr")
 
       enrolmentStoreConnector.checkIfAlreadyClaimed(utr) flatMap {
@@ -155,10 +155,10 @@ class EstatesAuthController @Inject() (
       delegatedEnrolment.authenticate(utr)
     }
 
-  private def checkForEstateEnrolmentForUTR[A](utr: String)(implicit request: IdentifierRequest[A]): Boolean =
+  private def checkForEstateEnrolmentForUTR[A](utr: String)(using request: IdentifierRequest[A]): Boolean =
     request.user.enrolments.enrolments
-      .find(_.key equals "HMRC-TERS-ORG")
-      .flatMap(_.identifiers.find(_.key equals "SAUTR"))
-      .exists(_.value equals utr)
+      .find(_.key `equals` "HMRC-TERS-ORG")
+      .flatMap(_.identifiers.find(_.key `equals` "SAUTR"))
+      .exists(_.value `equals` utr)
 
 }

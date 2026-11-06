@@ -17,8 +17,8 @@
 package models
 
 import play.api.Logging
-import play.api.http.Status._
-import play.api.libs.json._
+import play.api.http.Status.*
+import play.api.libs.json.*
 import utils.Session
 import uk.gov.hmrc.http.{HeaderCarrier, HttpReads, HttpResponse}
 
@@ -26,7 +26,7 @@ sealed trait EnrolmentStoreResponse
 
 object EnrolmentStoreResponse extends Logging {
 
-  implicit val format: Format[EnrolmentStore] = Json.format[EnrolmentStore]
+  given format: Format[EnrolmentStore] = Json.format[EnrolmentStore]
 
   case class EnrolmentStore(principalUserIds: Seq[String], delegatedUserIds: Seq[String]) extends EnrolmentStoreResponse
 
@@ -42,7 +42,7 @@ object EnrolmentStoreResponse extends Logging {
 
   case object AlreadyClaimed extends EnrolmentStoreResponse
 
-  def httpReads(utr: String)(implicit hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
+  def httpReads(utr: String)(using hc: HeaderCarrier): HttpReads[EnrolmentStoreResponse] =
     (_: String, _: String, response: HttpResponse) => {
       logger.debug(
         s"[Session ID: ${Session.id(hc)}][UTR: $utr] response status received from ES0 api: ${response.status}"
@@ -51,10 +51,10 @@ object EnrolmentStoreResponse extends Logging {
       response.status match {
         case OK                  =>
           response.json.as[EnrolmentStore] match {
-            case EnrolmentStore(Seq(), _) =>
+            case EnrolmentStore(Seq(), Seq()) =>
               logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has not been claimed")
               NotClaimed
-            case _                        =>
+            case _                            =>
               logger.info(s"[Session ID: ${Session.id(hc)}][UTR: $utr] UTR has already been claimed")
               AlreadyClaimed
           }

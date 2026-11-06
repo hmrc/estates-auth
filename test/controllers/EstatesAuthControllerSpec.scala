@@ -19,15 +19,15 @@ package controllers
 import base.SpecBase
 import config.AppConfig
 import connectors.EnrolmentStoreConnector
-import models.EnrolmentStoreResponse._
-import models._
+import models.EnrolmentStoreResponse.*
+import models.*
 import org.mockito.ArgumentMatchers.{any, eq => mEq}
 import org.mockito.Mockito.{mock, when}
 import play.api.Application
 import play.api.inject.bind
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core._
+import play.api.test.Helpers.*
+import uk.gov.hmrc.auth.core.*
 import uk.gov.hmrc.auth.core.retrieve.{EmptyRetrieval, Retrieval, ~}
 import uk.gov.hmrc.http.HeaderCarrier
 
@@ -67,11 +67,33 @@ class EstatesAuthControllerSpec extends SpecBase {
 
     "authenticating an agent" when {
 
+      "estate is claimed but enrolment query fails" must {
+
+        "return internal server error when primary enrolment check enabled" in {
+
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
+            .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
+
+          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
+            .thenReturn(Future.successful(ServerError))
+
+          val app = applicationBuilder()
+            .configure("features.primaryEnrolmentCheck.enabled" -> true)
+            .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+            .build()
+
+          val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
+
+          val result = route(app, request).value
+          status(result) mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+
       "estate is claimed and agent is authorised" must {
 
         "return OK" in {
 
-          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
 
           val predicatedMatcher = mEq(
@@ -80,10 +102,10 @@ class EstatesAuthControllerSpec extends SpecBase {
               .withDelegatedAuthRule("trust-auth")
           )
 
-          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
+          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(using any(), any()))
             .thenReturn(Future.successful(()))
 
-          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
+          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
 
           val app = applicationBuilder()
@@ -105,10 +127,12 @@ class EstatesAuthControllerSpec extends SpecBase {
 
         "redirect to estate not claimed page when primary enrolment check enabled" in {
 
-          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
 
-          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any[HeaderCarrier], any[ExecutionContext]))
+          when(
+            mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any[HeaderCarrier], any[ExecutionContext])
+          )
             .thenReturn(Future.successful(NotClaimed))
 
           val app = applicationBuilder()
@@ -132,7 +156,7 @@ class EstatesAuthControllerSpec extends SpecBase {
 
           val enrolments = Enrolments(Set(agentEnrolment))
 
-          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
 
           val predicatedMatcher = mEq(
@@ -141,10 +165,10 @@ class EstatesAuthControllerSpec extends SpecBase {
               .withDelegatedAuthRule("trust-auth")
           )
 
-          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
+          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(using any(), any()))
             .thenReturn(Future.failed(InsufficientEnrolments()))
 
-          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
+          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
 
           val app = applicationBuilder()
@@ -174,7 +198,7 @@ class EstatesAuthControllerSpec extends SpecBase {
             )
           )
 
-          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
 
           val predicatedMatcher = mEq(
@@ -183,10 +207,10 @@ class EstatesAuthControllerSpec extends SpecBase {
               .withDelegatedAuthRule("trust-auth")
           )
 
-          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
+          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(using any(), any()))
             .thenReturn(Future.failed(InsufficientEnrolments()))
 
-          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
+          when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
             .thenReturn(Future.successful(AlreadyClaimed))
 
           val app = applicationBuilder()
@@ -212,7 +236,7 @@ class EstatesAuthControllerSpec extends SpecBase {
             )
           )
 
-          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+          when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
             .thenReturn(authRetrievals(AffinityGroup.Agent, enrolments))
 
           val predicatedMatcher = mEq(
@@ -221,7 +245,7 @@ class EstatesAuthControllerSpec extends SpecBase {
               .withDelegatedAuthRule("trust-auth")
           )
 
-          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(any(), any()))
+          when(mockAuthConnector.authorise(predicatedMatcher, mEq(EmptyRetrieval))(using any(), any()))
             .thenReturn(Future.failed(InsufficientEnrolments()))
 
           val app = applicationBuilder()
@@ -251,10 +275,10 @@ class EstatesAuthControllerSpec extends SpecBase {
 
             val enrolments = Enrolments(Set(estatesEnrolment))
 
-            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
 
-            when(mockAuthConnector.authorise(any[Relationship], mEq(EmptyRetrieval))(any(), any()))
+            when(mockAuthConnector.authorise(any[Relationship], mEq(EmptyRetrieval))(using any(), any()))
               .thenReturn(Future.failed(FailedRelationship()))
 
             val app = applicationBuilder()
@@ -279,10 +303,10 @@ class EstatesAuthControllerSpec extends SpecBase {
 
             val enrolments = Enrolments(Set(estatesEnrolment))
 
-            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
 
-            when(mockAuthConnector.authorise(any[Relationship], mEq(EmptyRetrieval))(any(), any()))
+            when(mockAuthConnector.authorise(any[Relationship], mEq(EmptyRetrieval))(using any(), any()))
               .thenReturn(Future.successful(()))
 
             val app = applicationBuilder()
@@ -308,10 +332,10 @@ class EstatesAuthControllerSpec extends SpecBase {
           "redirect to tech difficulties" in {
             val enrolments = Enrolments(Set())
 
-            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
 
-            when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
+            when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
               .thenReturn(Future.successful(ServerError))
 
             val app = applicationBuilder()
@@ -332,10 +356,10 @@ class EstatesAuthControllerSpec extends SpecBase {
 
             val enrolments = Enrolments(Set())
 
-            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
 
-            when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
+            when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
               .thenReturn(Future.successful(AlreadyClaimed))
 
             val app = applicationBuilder()
@@ -359,10 +383,10 @@ class EstatesAuthControllerSpec extends SpecBase {
 
             val enrolments = Enrolments(Set())
 
-            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+            when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
               .thenReturn(authRetrievals(AffinityGroup.Organisation, enrolments))
 
-            when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(any(), any()))
+            when(mockEnrolmentStoreConnector.checkIfAlreadyClaimed(mEq(utr))(using any(), any()))
               .thenReturn(Future.successful(NotClaimed))
 
             val app = applicationBuilder()
@@ -386,7 +410,7 @@ class EstatesAuthControllerSpec extends SpecBase {
 
       "redirect to the unauthorised URL" in {
 
-        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
           .thenReturn(
             authRetrievals(
               AffinityGroup.Individual,
@@ -414,7 +438,7 @@ class EstatesAuthControllerSpec extends SpecBase {
         .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
         .build()
 
-      when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+      when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
         .thenReturn(Future failed BearerTokenExpired())
 
       val request = FakeRequest(GET, controllers.routes.EstatesAuthController.authorisedForUtr(utr).url)
@@ -425,6 +449,28 @@ class EstatesAuthControllerSpec extends SpecBase {
   }
 
   "invoking authenticate" when {
+
+    "a non-agent user calls the agent auth endpoint" must {
+
+      "redirect the user to the unauthorised URL" in {
+
+        val app = applicationBuilder()
+          .configure("features.primaryEnrolmentCheck.enabled" -> false)
+          .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
+          .build()
+
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
+          .thenReturn(authRetrievals(AffinityGroup.Individual, Enrolments(Set())))
+
+        val request = FakeRequest(GET, controllers.routes.EstatesAuthController.agentAuthorised().url)
+        val result  = route(app, request).value
+
+        status(result) mustBe OK
+
+        val response = contentAsJson(result).as[EstateAuthResponse]
+        response mustBe EstateAuthDenied(appConfig.unauthorisedUrl)
+      }
+    }
 
     "an Agent user hasn't enrolled an Agent Services Account" must {
 
@@ -437,7 +483,7 @@ class EstatesAuthControllerSpec extends SpecBase {
           .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
           .build()
 
-        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Agent, noEnrollment))
 
         val request = FakeRequest(GET, controllers.routes.EstatesAuthController.agentAuthorised().url)
@@ -459,7 +505,7 @@ class EstatesAuthControllerSpec extends SpecBase {
           .overrides(bind[EnrolmentStoreConnector].toInstance(mockEnrolmentStoreConnector))
           .build()
 
-        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(any(), any()))
+        when(mockAuthConnector.authorise(any(), any[Retrieval[RetrievalType]]())(using any(), any()))
           .thenReturn(authRetrievals(AffinityGroup.Agent, agentEnrolments))
 
         val request = FakeRequest(GET, controllers.routes.EstatesAuthController.agentAuthorised().url)
