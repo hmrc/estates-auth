@@ -20,7 +20,7 @@ import base.SpecBase
 import models.EnrolmentStoreResponse.*
 import play.api.http.Status
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HttpResponse
 
 class EnrolmentStoreResponseSpec extends SpecBase {
 
